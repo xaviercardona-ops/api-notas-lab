@@ -11,9 +11,10 @@ documentas con **OpenAPI**. Unas pruebas te dicen si vas bien.
 
 ## Empieza aquí
 
-1. Lee la **guía del laboratorio** (pasos, tiempos, rúbrica): `docs/guia.html` · en línea cuando el docente la publique.
-2. Crea el repositorio de tu equipo con **Use this template** (botón verde de esta página) y clónalo.
-3. Ejecuta `npm start` y abre <http://localhost:3000>. Al principio la aplicación **no carga**: la API todavía no existe. Ese es tu trabajo.
+1. Lee la **guía del laboratorio** (pasos, tiempos, rúbrica): https://api-notas-lab.vercel.app/guia.html
+2. Revisa la **presentación** del tema: https://api-notas-lab.vercel.app/presentacion.html
+3. Crea el repositorio de tu equipo con **Use this template** (botón verde de esta página) y clónalo.
+4. Ejecuta `npm run dev` y abre <http://localhost:3000>. Al principio la aplicación **no carga**: la API todavía no existe. Ese es tu trabajo.
 
 ```bash
 npm start               # servidor + aplicación en http://localhost:3000 (cada solicitud aparece en la terminal)
