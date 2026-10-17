@@ -1,0 +1,11 @@
+node_modules/
+.DS_Store
+.vscode/
+*.log
+datos/
+
+# Solo para el docente (nunca se suben)
+GUIA_DOCENTE.md
+solucion/
+.vercel
+.env*

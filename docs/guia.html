@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Laboratorio API — Notas del semestre</title>
+<meta name="description" content="Laboratorio de Arquitectura de Software: los estudiantes le ponen una API REST (con versionado y documentación OpenAPI) a la aplicación MVC de Notas del semestre, con pruebas del contrato y reglas automáticas de arquitectura.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --paper: #eae7de;
+    --sheet: #fbfaf5;
+    --ink: #21241f;
+    --ink-soft: #5c6158;
+    --line: #dbd7c9;
+    --accent: #c85a1d;
+    --accent-soft: #f1dcc9;
+    --cat-error: #6b6f63;
+    --cat-error-soft: #e4e4dc;
+    --cat-defecto: #a5761f;
+    --cat-defecto-soft: #f1e2c2;
+    --cat-falla: #a8362a;
+    --cat-falla-soft: #f2d9d4;
+    --ok: #4a7a3f;
+    --shadow: 0 1px 2px rgba(33,36,31,0.06), 0 12px 32px -16px rgba(33,36,31,0.28);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #17181a;
+      --sheet: #232420;
+      --ink: #ede9df;
+      --ink-soft: #a8a99a;
+      --line: #3a3b34;
+      --accent: #e58444;
+      --accent-soft: #3a2a1c;
+      --cat-error: #a3a696;
+      --cat-error-soft: #34352d;
+      --cat-defecto: #d9a648;
+      --cat-defecto-soft: #3a2f18;
+      --cat-falla: #dd7a6c;
+      --cat-falla-soft: #3a211d;
+      --ok: #7fb56f;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 12px 32px -16px rgba(0,0,0,0.6);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper: #17181a;
+    --sheet: #232420;
+    --ink: #ede9df;
+    --ink-soft: #a8a99a;
+    --line: #3a3b34;
+    --accent: #e58444;
+    --accent-soft: #3a2a1c;
+    --cat-error: #a3a696;
+    --cat-error-soft: #34352d;
+    --cat-defecto: #d9a648;
+    --cat-defecto-soft: #3a2f18;
+    --cat-falla: #dd7a6c;
+    --cat-falla-soft: #3a211d;
+    --ok: #7fb56f;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 12px 32px -16px rgba(0,0,0,0.6);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Source Serif 4", Georgia, "Times New Roman", serif;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: clamp(20px, 5vw, 56px) clamp(16px, 4vw, 28px) 64px;
+  }
+
+  .sheet {
+    background: var(--sheet);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    box-shadow: var(--shadow);
+    padding: clamp(24px, 5vw, 56px);
+  }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 10px;
+  }
+
+  h1 {
+    font-family: "Barlow Condensed", "Arial Narrow", sans-serif;
+    font-weight: 700;
+    font-size: clamp(34px, 6vw, 48px);
+    line-height: 1.02;
+    margin: 0 0 16px;
+    text-wrap: balance;
+  }
+
+  .lede {
+    font-size: 17px;
+    color: var(--ink-soft);
+    max-width: 62ch;
+    margin: 0 0 24px;
+  }
+
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .tag-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 13px;
+    text-decoration: none;
+    color: var(--ink);
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--accent);
+    padding: 9px 14px;
+    border-radius: 2px;
+    transition: border-color 120ms ease, transform 120ms ease;
+  }
+  .tag-link:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .tag-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .tag-link .k { color: var(--ink-soft); }
+
+  hr.div {
+    border: none;
+    border-top: 1px solid var(--line);
+    margin: 36px 0;
+  }
+
+  h2 {
+    font-family: "Barlow Condensed", "Arial Narrow", sans-serif;
+    font-weight: 600;
+    font-size: 22px;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    color: var(--ink);
+    margin: 0 0 6px;
+  }
+
+  h3 {
+    font-family: "Barlow Condensed", "Arial Narrow", sans-serif;
+    font-weight: 600;
+    font-size: 19px;
+    margin: 0 0 4px;
+  }
+
+  .section-note {
+    color: var(--ink-soft);
+    font-size: 15.5px;
+    max-width: 64ch;
+    margin: 0 0 20px;
+  }
+
+  .pipeline {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 13px;
+  }
+  .pipeline .step {
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    padding: 6px 12px;
+    background: var(--paper);
+  }
+  .pipeline .arrow { color: var(--ink-soft); }
+
+  .gherkin-row {
+    display: grid;
+    grid-template-columns: 90px 1fr;
+    gap: 14px;
+    padding: 6px 0;
+  }
+  .gherkin-label {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--accent);
+    padding-top: 2px;
+  }
+  .criterio {
+    border-top: 1px solid var(--line);
+    padding: 12px 0;
+  }
+  .criterio:first-of-type { border-top: none; padding-top: 4px; }
+
+  .example-box {
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--ok);
+    border-radius: 3px;
+    padding: 18px 20px;
+    background: var(--paper);
+    margin-bottom: 8px;
+  }
+  .example-tag {
+    display: inline-block;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ok);
+    margin-bottom: 8px;
+  }
+
+  table.cp-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    margin-top: 12px;
+  }
+  .cp-table th, .cp-table td {
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+  .cp-table th {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    font-weight: 600;
+  }
+  .cp-table code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.92em;
+    background: var(--accent-soft);
+    padding: 0.1em 0.4em;
+    border-radius: 2px;
+  }
+
+  .story-list {
+    display: flex;
+    flex-direction: column;
+  }
+  .story-card {
+    display: grid;
+    grid-template-columns: 76px 1fr;
+    gap: 18px;
+    padding: 16px 4px;
+    border-top: 1px solid var(--line);
+  }
+  .story-card:last-child { border-bottom: 1px solid var(--line); }
+  .story-id {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-weight: 600;
+    font-size: 13.5px;
+    color: var(--accent);
+    padding-top: 2px;
+  }
+  .story-title {
+    font-weight: 600;
+    margin: 0 0 4px;
+  }
+  .story-text {
+    font-size: 16px;
+  }
+
+  .steps-list {
+    margin: 0;
+    padding-left: 22px;
+  }
+  .steps-list li {
+    margin-bottom: 8px;
+    font-size: 16px;
+  }
+  .steps-list li::marker {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    color: var(--accent);
+    font-size: 14px;
+  }
+
+  footer {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+    justify-content: space-between;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+
+  @media (max-width: 520px) {
+    .story-card { grid-template-columns: 1fr; gap: 4px; }
+    .gherkin-row { grid-template-columns: 1fr; gap: 2px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+
+  .page { max-width: 860px; }
+  .k { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.78em; letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+  .stats { display: flex; flex-wrap: wrap; gap: 8px 22px; margin: 18px 0 0; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12.5px; color: var(--ink-soft); }
+  .stats b { color: var(--ink); font-weight: 600; }
+  .steps4 { display: flex; flex-direction: column; gap: 14px; margin: 0; padding: 0; list-style: none; counter-reset: st; }
+  .steps4 li { display: grid; grid-template-columns: 34px 1fr; gap: 14px; counter-increment: st; }
+  .steps4 li::before { content: counter(st); font-family: "Barlow Condensed", sans-serif; font-weight: 700; font-size: 22px; color: var(--accent); line-height: 1.3; }
+  .steps4 strong { display: block; font-size: 16px; }
+  .steps4 span { color: var(--ink-soft); font-size: 15px; }
+  pre.template { background: var(--paper); border: 1px solid var(--line); border-left: 3px solid var(--accent); padding: 14px 16px; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12.5px; line-height: 1.55; overflow-x: auto; white-space: pre-wrap; margin: 8px 0 10px; }
+  button.copy { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--ink); background: var(--paper); border: 1px solid var(--line); border-radius: 2px; padding: 7px 12px; cursor: pointer; }
+  button.copy:hover { border-color: var(--accent); }
+  button.copy:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0 6px; }
+  @media (max-width: 680px) { .pair { grid-template-columns: 1fr; } }
+  .stack { display: flex; flex-direction: column; gap: 12px; margin: 14px 0 6px; }
+  .ex { border: 1px solid var(--line); border-radius: 3px; padding: 12px 14px; background: var(--paper); font-size: 14.5px; }
+  .ex.bad { border-left: 3px solid var(--cat-falla); }
+  .ex.good { border-left: 3px solid var(--ok); }
+  .ex.plan { border-left: 3px solid var(--accent); }
+  .ex .tag { display: block; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 6px; }
+  .ex.bad .tag { color: var(--cat-falla); }
+  .ex.good .tag { color: var(--ok); }
+  .ex.plan .tag { color: var(--accent); }
+  .ex p { margin: 0 0 6px; }
+  .ex p:last-child { margin: 0; }
+  .ex .cp { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12.5px; line-height: 1.5; margin: 0 0 8px; }
+  table.plain { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+  .table-wrap { overflow-x: auto; }
+  table.plain th, table.plain td { text-align: left; padding: 9px 12px; border-top: 1px solid var(--line); vertical-align: top; }
+  table.plain thead th { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); border-top: none; border-bottom: 1px solid var(--line); }
+  table.plain code { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.86em; background: var(--accent-soft); padding: 0.1em 0.4em; border-radius: 2px; }
+  .sev { font-family: "IBM Plex Mono", ui-monospace, monospace; font-weight: 600; font-size: 13px; white-space: nowrap; }
+  .tools { margin: 0; padding-left: 20px; }
+  .tools li { margin-bottom: 6px; font-size: 15.5px; }
+  .section-note code { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.86em; background: var(--accent-soft); padding: 0.1em 0.4em; border-radius: 2px; }
+  .epic-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 30px 0 2px; }
+  .epic-head h2 { margin: 0; }
+  .epic-meta { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--ink-soft); }
+  .story { border-top: 1px solid var(--line); padding: 18px 4px; display: grid; grid-template-columns: 64px 1fr; gap: 16px; scroll-margin-top: 16px; }
+  .story:target { background: var(--paper); }
+  .story h3 { margin: 0 0 4px; font-size: 18px; }
+  .ac-list { list-style: none; margin: 12px 0 0; padding: 0; counter-reset: ac; display: flex; flex-direction: column; gap: 9px; }
+  .ac-list li { counter-increment: ac; display: grid; grid-template-columns: 38px 1fr; gap: 8px; font-size: 15.5px; }
+  .ac-list li::before { content: "CA" counter(ac); font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; font-weight: 600; color: var(--ink-soft); padding-top: 3px; }
+  @media (max-width: 520px) { .story { grid-template-columns: 1fr; gap: 4px; } }
+  @media print { .copy { display: none; } }
+
+  .page { max-width: 880px; }
+  .toc { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 0; padding: 0; list-style: none; }
+  .toc a { display: inline-block; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-decoration: none; color: var(--ink); background: var(--paper); border: 1px solid var(--line); border-radius: 2px; padding: 5px 10px; }
+  .toc a:hover { border-color: var(--accent); }
+  .toc a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .part-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 14px; margin: 0 0 4px; }
+  .part-head h2 { margin: 0; }
+  .chip { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11.5px; letter-spacing: 0.04em; color: var(--ink-soft); border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; white-space: nowrap; }
+  .chip.bonus { color: var(--accent); border-color: var(--accent); }
+  h3 { margin-top: 22px; }
+  p { margin: 0 0 12px; }
+  .section-note { max-width: 72ch; }
+  ol.pasos, ul.lista { margin: 0 0 14px; padding-left: 22px; }
+  ol.pasos li, ul.lista li { margin-bottom: 8px; font-size: 16px; }
+  ol.pasos li::marker { font-family: "IBM Plex Mono", ui-monospace, monospace; color: var(--accent); font-size: 14px; }
+  ul.check { list-style: none; margin: 0 0 14px; padding: 0; }
+  ul.check li { display: grid; grid-template-columns: 24px 1fr; gap: 6px; margin-bottom: 7px; font-size: 16px; }
+  ul.check li::before { content: "☐"; color: var(--accent); font-size: 17px; line-height: 1.35; }
+  code { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.86em; background: var(--accent-soft); color: var(--ink); padding: 0.1em 0.4em; border-radius: 2px; }
+  pre.code { position: relative; background: var(--ink); color: var(--sheet); border-radius: 3px; padding: 14px 16px; overflow-x: auto; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12.5px; line-height: 1.55; margin: 8px 0 14px; }
+  pre.code code { background: none; color: inherit; padding: 0; font-size: inherit; }
+  pre.code .c { opacity: 0.62; }
+  pre.code button.copy { position: absolute; top: 8px; right: 8px; font-size: 11px; padding: 4px 9px; background: var(--sheet); color: var(--ink); opacity: 0.0; transition: opacity 120ms ease; }
+  pre.code:hover button.copy, pre.code button.copy:focus-visible { opacity: 1; }
+  @media (hover: none) { pre.code button.copy { opacity: 1; } }
+  .callout { border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 3px; background: var(--paper); padding: 12px 16px; margin: 14px 0; font-size: 15.5px; }
+  .callout p:last-child { margin-bottom: 0; }
+  .callout .label { display: block; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); margin-bottom: 4px; }
+  .callout.warn { border-left-color: var(--cat-falla); }
+  .callout.warn .label { color: var(--cat-falla); }
+  .callout.ok { border-left-color: var(--ok); }
+  .callout.ok .label { color: var(--ok); }
+  figure { margin: 14px 0; }
+  figure img { display: block; max-width: 100%; height: auto; border: 1px solid var(--line); border-radius: 3px; }
+  figcaption { font-size: 13.5px; color: var(--ink-soft); margin-top: 6px; }
+  table.plain td:first-child { white-space: nowrap; }
+  table.plain.wrap td:first-child { white-space: normal; }
+  dl.vocab { display: grid; grid-template-columns: max-content 1fr; gap: 8px 18px; margin: 0; font-size: 15.5px; }
+  dl.vocab dt { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 13px; color: var(--accent); font-weight: 600; padding-top: 2px; }
+  dl.vocab dd { margin: 0; }
+  @media (max-width: 560px) { dl.vocab { grid-template-columns: 1fr; gap: 2px; } dl.vocab dd { margin-bottom: 8px; } }
+  details { border: 1px solid var(--line); border-radius: 3px; padding: 10px 14px; margin: 10px 0; background: var(--paper); }
+  details summary { cursor: pointer; font-weight: 600; font-size: 15.5px; }
+  details summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  details[open] summary { margin-bottom: 8px; }
+  @media print { pre.code button.copy { display: none; } details { display: block; } }
+
+  /* ---- Laboratorio API: acento azul y colores de los tres roles de MVC ---- */
+  :root { --accent: #1f5f8b; --accent-soft: #dbe8f2; --rol-m: #1f5f8b; --rol-v: #a84a14; --rol-c: #3a6330; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --accent: #6fb1e0; --accent-soft: #1c2f3f; --rol-m: #6fb1e0; --rol-v: #e58444; --rol-c: #8fc77a; }
+  }
+  :root[data-theme="dark"] { --accent: #6fb1e0; --accent-soft: #1c2f3f; --rol-m: #6fb1e0; --rol-v: #e58444; --rol-c: #8fc77a; }
+  .rol { display: inline-block; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.74em; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; vertical-align: 0.08em; }
+  .rol.m { color: var(--rol-m); } .rol.v { color: var(--rol-v); } .rol.c { color: var(--rol-c); }
+  h3 .rol, h3 .chip { margin-left: 6px; vertical-align: 0.15em; }
+  .part-head .rol { margin-left: 4px; }
+  .roles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 16px 0; }
+  .rol-card { border: 1px solid var(--line); border-top: 4px solid var(--line); border-radius: 3px; padding: 12px 14px; background: var(--paper); font-size: 14.5px; }
+  .rol-card h3 { margin: 0 0 6px; font-size: 20px; }
+  .rol-card p { margin: 0; }
+  .rol-card.m { border-top-color: var(--rol-m); } .rol-card.m h3 { color: var(--rol-m); }
+  .rol-card.v { border-top-color: var(--rol-v); } .rol-card.v h3 { color: var(--rol-v); }
+  .rol-card.c { border-top-color: var(--rol-c); } .rol-card.c h3 { color: var(--rol-c); }
+  @media (max-width: 680px) { .roles { grid-template-columns: 1fr; } }
+  kbd { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.84em; padding: 0.05em 0.4em; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 3px; background: var(--paper); white-space: nowrap; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="sheet">
+    <p class="eyebrow">Arquitectura de Software · Diseño de APIs</p>
+    <h1>Laboratorio: una API REST para las Notas</h1>
+    <p class="lede">
+      Reciben la aplicación MVC de la clase pasada, cuyo <span class="rol m">Modelo</span> vivía en el navegador, y le ponen un
+      <strong>servidor con una API REST</strong>: diseñan los endpoints, escogen los códigos de estado, <strong>versionan</strong> sin
+      romper a nadie y la <strong>documentan</strong> con OpenAPI. Trabajan en equipo, con JavaScript puro: sin frameworks y sin
+      instalar dependencias. Unas pruebas les dicen si lo hicieron bien.
+    </p>
+    <div class="links">
+      <a class="tag-link" href="https://api-notas-lab.vercel.app/presentacion.html" target="_blank" rel="noopener"><span class="k">PRESENTACIÓN</span> 24 diapositivas</a>
+      <a class="tag-link" href="https://github.com/xaviercardona-ops/api-notas-lab/generate" target="_blank" rel="noopener"><span class="k">PLANTILLA</span> crear el repo del equipo</a>
+      <a class="tag-link" href="https://github.com/xaviercardona-ops/api-notas-lab" target="_blank" rel="noopener"><span class="k">CÓDIGO</span> api-notas-lab</a>
+    </div>
+    <div class="stats"><span><b>7</b> partes</span><span><b>≈ 2 h 20 min</b> con la entrega</span><span><b>1</b> repositorio por equipo</span><span>JavaScript · sin dependencias</span></div>
+    <ul class="toc">
+      <li><a href="#objetivos">Objetivos</a></li>
+      <li><a href="#antes">Antes de la clase</a></li>
+      <li><a href="#ruta">Ruta y tiempos</a></li>
+      <li><a href="#mapa">Mapa del proyecto</a></li>
+      <li><a href="#p0">0 · Preparación</a></li>
+      <li><a href="#p1">1 · Diseñar el contrato</a></li>
+      <li><a href="#p2">2 · El servidor: la API v1</a></li>
+      <li><a href="#p3">3 · El navegador: conectar el MVC</a></li>
+      <li><a href="#p4">4 · Versionar: la v2</a></li>
+      <li><a href="#p5">5 · Documentar con OpenAPI</a></li>
+      <li><a href="#p6">6 · Medir y entregar</a></li>
+      <li><a href="#entrega">Entrega y rúbrica</a></li>
+      <li><a href="#problemas">Problemas frecuentes</a></li>
+    </ul>
+
+    <hr class="div">
+
+    <h2 id="objetivos">Qué van a lograr</h2>
+    <ul class="lista">
+      <li><strong>Diseñar endpoints</strong> como lo hace una API REST: recursos como sustantivos, métodos HTTP con su significado, códigos de estado correctos y errores que una máquina y una persona puedan leer.</li>
+      <li>Llevar un Modelo MVC <strong>al servidor</strong> y conectar el navegador con una API <strong>sin tocar la Vista</strong>: ver qué cambia y qué se queda quieto.</li>
+      <li>Decidir <strong>dónde viven las reglas de negocio</strong> (el servidor es el único dueño) y qué se traduce en la frontera entre el negocio y HTTP.</li>
+      <li><strong>Versionar sin romper</strong>: lanzar una v2, mantener la v1 y avisar que se retira con las cabeceras estándar <code>Deprecation</code> y <code>Sunset</code>.</li>
+      <li><strong>Documentar</strong> la API con OpenAPI y comprobar con pruebas que la documentación no se contradice con el código.</li>
+    </ul>
+    <div class="roles">
+      <div class="rol-card m"><h3>Modelo</h3><p><strong>Ahora vive en el servidor.</strong><br>Sigue sin saber de pantallas… y tampoco sabe qué es un «404».</p></div>
+      <div class="rol-card v"><h3>Vista</h3><p><strong>No cambia ni una línea.</strong><br>Sigue leyendo <code>evaluaciones</code> y <code>resumen()</code>. No sabe que el Modelo ahora es remoto.</p></div>
+      <div class="rol-card c"><h3>Controlador</h3><p><strong>Cambia lo mínimo:</strong> las órdenes ahora tardan, así que las <em>espera</em> (<code>await</code>).</p></div>
+    </div>
+    <div class="callout warn"><span class="label">Reglas del laboratorio</span>
+      <p><strong>1.</strong> El Modelo <strong>no sabe de HTTP</strong>: ni estados, ni rutas, ni <code>fetch</code>. <strong>2.</strong> Las rutas <strong>traducen, no deciden</strong>: no llevan reglas de negocio.
+      <strong>3.</strong> La <strong>URI nombra recursos</strong> (sustantivos) y el <strong>método HTTP es la acción</strong>: nada de verbos en la dirección.
+      <strong>4.</strong> El navegador <strong>no tiene reglas</strong> y solo <code>cliente-api.js</code> habla HTTP.
+      <strong>5.</strong> La <strong>v1 no se rompe</strong>: lo nuevo va en la v2.</p>
+    </div>
+
+    <hr class="div">
+
+    <h2 id="antes">Antes de la clase</h2>
+    <p class="section-note">No hay descargas pesadas: todo cabe en unos pocos archivos. Aun así, comprueben su equipo con calma el día anterior.</p>
+    <ul class="check">
+      <li><span><strong>Node.js 18.2 o superior</strong> (recomendado 20 o 22). Comprueben con <code>node -v</code>. Si no lo tienen, instalen la versión LTS desde nodejs.org. <em>¿No pueden instalar nada? Hay un Plan B al final de esta guía.</em></span></li>
+      <li><span><strong>Git.</strong> Comprueben con <code>git --version</code>.</span></li>
+      <li><span><strong>Visual Studio Code</strong> (recomendado) y un navegador moderno con herramientas de desarrollo (Chrome, Edge o Firefox).</span></li>
+      <li><span><strong>Una cuenta de GitHub por integrante.</strong> Una persona del equipo crea el repositorio y agrega al resto como colaboradores.</span></li>
+      <li><span><strong>Haber hecho (o al menos recordar) el laboratorio de MVC.</strong> No necesitan su código: esta plantilla trae la aplicación de la clase pasada ya terminada.</span></li>
+      <li><span><strong>Equipos de 2 o 3 personas.</strong> En pareja trabajen como <em>conductor y navegante</em> y cambien de rol en cada parte.</span></li>
+    </ul>
+
+    <hr class="div">
+
+    <h2 id="ruta">Ruta y tiempos</h2>
+    <div class="table-wrap">
+      <table class="plain wrap">
+        <thead><tr><th>Parte</th><th>Qué hacen</th><th>Tiempo</th><th>Terminan con…</th></tr></thead>
+        <tbody>
+          <tr><td>0 · Preparación</td><td>Crean el repo del equipo, arrancan el servidor y ven la aplicación sin API</td><td>10 min</td><td>La app que dice «No existe /v1/evaluaciones»</td></tr>
+          <tr><td>1 · Diseñar el contrato</td><td>Escogen recursos, URI, métodos y estados <em>antes</em> de programar; critican seis direcciones mal diseñadas</td><td>20 min</td><td><code>ENTREGA.md</code> §1</td></tr>
+          <tr><td>2 · El servidor</td><td>Implementan la API v1: leer, crear, modificar, borrar y errores legibles</td><td>35 min</td><td><code>npm run test:api</code> en verde</td></tr>
+          <tr><td>3 · El navegador</td><td>Escriben el Modelo remoto y vuelven asíncrono al Controlador</td><td>25 min</td><td>La app funciona contra su API</td></tr>
+          <tr><td>4 · Versionar</td><td>Crean la v2 (paginación, filtro, orden), avisan que la v1 se retira y migran el cliente</td><td>25 min</td><td><code>npm run test:versionado</code> en verde</td></tr>
+          <tr><td>5 · Documentar</td><td>Completan el documento OpenAPI y dejan que las pruebas lo comparen con el código</td><td>15 min</td><td><code>npm run test:docs</code> en verde</td></tr>
+          <tr><td>6 · Medir y entregar</td><td>Reglas de arquitectura, evidencias y reflexión</td><td>10 min</td><td><code>npm test</code> en verde y <code>ENTREGA.md</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="section-note" style="margin-top:12px"><strong>Ruta corta (≈ 100 min):</strong> partes 0 a 3 y una entrega reducida (secciones 1 y 2 de <code>ENTREGA.md</code> y la salida de <code>npm test</code>). Las partes 4 y 5 quedan como trabajo posterior.</p>
+
+    <hr class="div">
+
+    <h2 id="mapa">Mapa del proyecto</h2>
+    <div class="table-wrap">
+      <table class="plain wrap">
+        <thead><tr><th>Archivo</th><th>Qué es</th><th>¿Lo modifican?</th></tr></thead>
+        <tbody>
+          <tr><td><code>servidor/modelo.js</code></td><td><span class="rol m">Modelo</span> El de la clase pasada, terminado, con cuatro cambios pequeños (ver abajo). No sabe de HTTP.</td><td>No: léanlo</td></tr>
+          <tr><td><code>servidor/almacen.mjs</code></td><td>Dónde guarda el servidor las evaluaciones: memoria o el archivo <code>datos/notas.json</code>.</td><td>No</td></tr>
+          <tr><td><code>servidor/nucleo.mjs</code></td><td>La «plomería» HTTP: busca la ruta, responde 404 y 405, lee el JSON, formatea los errores.</td><td>No: léanlo</td></tr>
+          <tr><td><code>servidor/representaciones.mjs</code></td><td>Cómo se <em>ve</em> una evaluación por fuera (el JSON). Es la «Vista» de la API.</td><td>No</td></tr>
+          <tr><td><code>servidor/rutas.mjs</code></td><td><span class="rol c">Controlador</span> de la API: un manejador por operación y la tabla de rutas.</td><td><strong>Partes 2 y 4</strong></td></tr>
+          <tr><td><code>servidor/openapi.mjs</code></td><td>La documentación de la API como datos (OpenAPI 3.1).</td><td><strong>Parte 5</strong></td></tr>
+          <tr><td><code>servidor/aplicacion.mjs</code>, <code>main.mjs</code></td><td>Arman y arrancan el servidor. Raíz de composición del lado del servidor.</td><td>No</td></tr>
+          <tr><td><code>cliente/index.html</code></td><td>La pantalla: HTML estático, sin lógica. El servidor la entrega en <code>/</code>.</td><td>No</td></tr>
+          <tr><td><code>cliente/src/vista.js</code></td><td><span class="rol v">Vista</span> La de la clase pasada. <strong>No cambia.</strong></td><td>No</td></tr>
+          <tr><td><code>cliente/src/termometro-vista.js</code></td><td>La segunda vista. Ya no importa las reglas: las recibe en el resumen.</td><td>No</td></tr>
+          <tr><td><code>cliente/src/modelo-remoto.js</code></td><td>El Modelo visto desde el navegador: misma cara, pero pregunta todo a la API.</td><td><strong>Parte 3</strong></td></tr>
+          <tr><td><code>cliente/src/controlador.js</code></td><td><span class="rol c">Controlador</span> El de la clase pasada, que ahora debe esperar al Modelo.</td><td><strong>Parte 3</strong></td></tr>
+          <tr><td><code>cliente/src/cliente-api.js</code></td><td>El único archivo del navegador que sabe de HTTP (<code>fetch</code>, versión, errores).</td><td>No</td></tr>
+          <tr><td><code>cliente/src/main.js</code></td><td>Ensambla las piezas del navegador.</td><td>Parte 4</td></tr>
+          <tr><td><code>pruebas/</code></td><td>La especificación ejecutable: contrato, cliente, versionado, documentación y arquitectura.</td><td>No: léanlas</td></tr>
+          <tr><td><code>ENTREGA.md</code></td><td>Lo que entregan: contrato, decisiones, flujo, versionado, evidencias y reflexión.</td><td>Todas las partes</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout"><span class="label">Los cuatro cambios del Modelo</span>
+      <p>Es el mismo Modelo de la clase pasada, con tres cosas que un API necesita y una que mejora un detalle: <strong>(1)</strong> cada <code>ErrorDeReglas</code> trae un <code>codigo</code> estable (el mensaje sirve para personas; el código, para máquinas);
+      <strong>(2)</strong> <code>agregar</code> y <code>calificar</code> <em>devuelven</em> la evaluación (hay que responder con ella); <strong>(3)</strong> existe <code>obtener(id)</code>;
+      <strong>(4)</strong> <code>calificar</code> comprueba primero que la evaluación exista (un recurso que no existe es un 404 aunque el cuerpo también tenga errores).</p>
+    </div>
+
+    <hr class="div">
+
+    <div class="part-head" id="p0"><h2>Parte 0 · Preparación</h2><span class="chip">10 min</span></div>
+    <ol class="pasos">
+      <li>Una persona del equipo abre la <a href="https://github.com/xaviercardona-ops/api-notas-lab/generate" target="_blank" rel="noopener">plantilla del laboratorio</a> y presiona <strong>Create repository from template</strong>. Nombre: <code>equipo-N-api</code> (cambien N). Visibilidad: <strong>Public</strong>. Después, en <em>Settings → Collaborators</em>, agrega a sus compañeros.</li>
+      <li>Cada integrante clona <strong>el repositorio de su equipo</strong> (no la plantilla) y entra a la carpeta:
+<pre class="code"><code>git clone https://github.com/SU-USUARIO/equipo-N-api.git
+cd equipo-N-api</code></pre></li>
+      <li>Arranquen el servidor (no hay nada que instalar). Con <code>npm run dev</code> se reinicia solo cada vez que guardan un archivo; con <code>npm start</code> hay que reiniciarlo a mano:
+<pre class="code"><code>npm run dev</code></pre>
+        La terminal imprime tres direcciones y, <strong>por cada solicitud</strong>, una línea con el método, la dirección y el estado. Déjenla abierta y a la vista mientras trabajan: es su mejor amiga.</li>
+      <li>Abran <code>http://localhost:3000/</code>. La pantalla aparece, pero dice <strong>«No existe /v1/evaluaciones…»</strong>: es lo esperado. El navegador ya es el MVC de la clase pasada conectado a un servidor… que todavía no tiene API.</li>
+      <li>En <strong>otra terminal</strong> miren cómo responde hoy el servidor a una dirección que no existe:
+<pre class="code"><code>curl -i http://localhost:3000/v1/resumen</code></pre>
+        Fíjense en el estado (<code>404</code>), en la cabecera <code>Content-Type: application/problem+json</code> y en los cinco campos del cuerpo. Ese formato de error ya viene resuelto; en la Parte 2 lo van a usar. <em>En Windows PowerShell escriban <code>curl.exe</code>.</em></li>
+      <li>Ejecuten las pruebas:
+<pre class="code"><code>npm test</code></pre>
+        Verán <strong>rojo</strong>: también es lo esperado. Pasan unas 30 pruebas (las del Modelo, que ya viene terminado, y algunas de arquitectura); el resto es lo que van a construir.</li>
+      <li>Lean los <strong>primeros 25 renglones</strong> de <code>servidor/nucleo.mjs</code>: explican qué recibe y qué devuelve un manejador, y todo lo que el núcleo ya hace por ustedes.</li>
+    </ol>
+    <div class="callout"><span class="label">Trabajar en equipo con git</span>
+      <p>Hagan <strong>un commit por parte</strong> (<code>git add -A</code> y <code>git commit -m "Parte 2: la API v1"</code>) y <code>git pull</code> antes de cada <code>git push</code>. La carpeta <code>datos/</code> (donde el servidor guarda las evaluaciones) no se sube: ya está en <code>.gitignore</code>.</p>
+    </div>
+
+    <hr class="div">
+
+    <div class="part-head" id="p1"><h2>Parte 1 · Diseñar el contrato</h2><span class="chip">20 min</span></div>
+    <p class="section-note">En la clase pasada el Modelo era un objeto con métodos. Para que el navegador y el servidor se hablen, cada operación debe volverse una <strong>solicitud HTTP</strong>. Antes de escribir una línea, diseñen ese contrato <strong>en papel</strong>: es la parte más barata de equivocarse. Esta parte no escribe código.</p>
+    <ol class="pasos">
+      <li>Lean <code>servidor/modelo.js</code> (solo los métodos públicos y la lista de <code>CODIGOS</code>). Esta tabla resume qué hace cada método y sobre qué «cosa» actúa:
+        <div class="table-wrap" style="margin-top:8px">
+          <table class="plain wrap">
+            <thead><tr><th>Método del Modelo</th><th>¿Cambia el estado?</th><th>¿Sobre qué recurso actúa?</th></tr></thead>
+            <tbody>
+              <tr><td><code>evaluaciones</code> (lista)</td><td>No</td><td>La colección de evaluaciones</td></tr>
+              <tr><td><code>obtener(id)</code></td><td>No</td><td>Una evaluación</td></tr>
+              <tr><td><code>agregar({ nombre, peso, nota })</code></td><td>Sí: crea</td><td>La colección (el servidor decide el id)</td></tr>
+              <tr><td><code>calificar(id, nota)</code></td><td>Sí: modifica <em>solo la nota</em></td><td>Una evaluación</td></tr>
+              <tr><td><code>eliminar(id)</code></td><td>Sí: borra</td><td>Una evaluación</td></tr>
+              <tr><td><code>resumen()</code></td><td>No: se calcula</td><td>El resumen: un recurso que no es una fila de datos</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </li>
+      <li>Completen la tabla de <code>ENTREGA.md</code>, <strong>sección 1</strong>: para cada una de las seis operaciones, el <strong>método</strong>, la <strong>URI</strong>, el <strong>estado de éxito</strong> (¿qué devuelve?) y los <strong>estados de error</strong> posibles (¿cuándo ocurre cada uno?). Usen estas reglas:</li>
+    </ol>
+    <div class="callout"><span class="label">Siete reglas para diseñar endpoints</span>
+      <p><strong>1.</strong> La URI nombra un <strong>recurso</strong> (sustantivo); el <strong>método</strong> HTTP es la acción. &nbsp;<strong>2.</strong> Las colecciones van en <strong>plural</strong> y un elemento cuelga de su colección: <code>/evaluaciones/{id}</code>. &nbsp;<strong>3.</strong> Minúsculas, guiones si hay varias palabras, sin extensión (<code>.json</code>) ni barra final. &nbsp;<strong>4.</strong> La <strong>versión</strong> va en la URI: <code>/v1/…</code>. &nbsp;<strong>5.</strong> Lo que filtra, ordena o pagina va en la <strong>consulta</strong> (<code>?estado=pendiente&amp;pagina=2</code>), no en la ruta. &nbsp;<strong>6.</strong> El éxito o el fracaso lo dice el <strong>estado HTTP</strong>, nunca un campo <code>ok</code> en el cuerpo. &nbsp;<strong>7.</strong> Todos los errores usan <strong>el mismo formato</strong> legible (<code>application/problem+json</code>).</p>
+    </div>
+    <div class="table-wrap">
+      <table class="plain wrap">
+        <thead><tr><th>Método</th><th>¿Seguro?</th><th>¿Idempotente?</th><th>Se usa para…</th></tr></thead>
+        <tbody>
+          <tr><td><code>GET</code></td><td>Sí: no cambia nada</td><td>Sí</td><td>Leer un recurso o una colección</td></tr>
+          <tr><td><code>POST</code></td><td>No</td><td>No</td><td>Crear (el servidor decide la dirección del recurso nuevo)</td></tr>
+          <tr><td><code>PUT</code></td><td>No</td><td>Sí</td><td>Reemplazar un recurso <em>completo</em></td></tr>
+          <tr><td><code>PATCH</code></td><td>No</td><td>No por definición (depende de la operación)</td><td>Cambiar <em>una parte</em> de un recurso</td></tr>
+          <tr><td><code>DELETE</code></td><td>No</td><td>Sí</td><td>Borrar un recurso</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="section-note"><strong>Idempotente</strong> quiere decir que repetir la misma solicitud deja <strong>el servidor en el mismo estado</strong> que hacerla una vez. No habla de que la respuesta sea idéntica.</p>
+    <ol class="pasos" start="3">
+      <li>Hagan <strong>la crítica</strong> de <code>ENTREGA.md</code>, sección 1b: seis direcciones mal diseñadas. Para cada una escriban qué regla rompe y cómo la reescribirían.</li>
+      <li><strong>Comparen con otro equipo</strong> durante 3 minutos: ¿coinciden en las URI y los métodos? ¿Dónde discreparon y por qué? <em>Todavía no miren las pruebas</em>: primero su propio criterio.</li>
+    </ol>
+    <p><strong>Listo cuando:</strong> la tabla de la sección 1 está completa y pueden explicar por qué ninguna URI lleva un verbo. No hay commit todavía: el contrato se confirma con el código en la Parte 2.</p>
+
+    <hr class="div">
+
+    <div class="part-head" id="p2"><h2>Parte 2 · El servidor: la API v1</h2><span class="chip">35 min</span><span class="rol c">Controlador de la API</span></div>
+    <p class="section-note">Abran <code>servidor/rutas.mjs</code>. Los manejadores son el <strong>Controlador del servidor</strong>: traducen una solicitud HTTP en una orden para el Modelo y el resultado (o el error) en una respuesta HTTP. Ya viene resuelto un ejemplo, <code>resumen</code>: léanlo primero. Las pruebas de <code>pruebas/api.pruebas.js</code> <strong>son la especificación</strong>.</p>
+
+    <h3>Qué recibe y qué devuelve un manejador</h3>
+    <div class="table-wrap">
+      <table class="plain wrap">
+        <thead><tr><th>Recibe una <code>solicitud</code></th><th>Devuelve una <code>respuesta</code></th></tr></thead>
+        <tbody>
+          <tr><td><code>params</code> → <code>{ id: "3" }</code> (siempre texto) · <code>query</code> → <code>?pagina=2</code> como <code>query.get('pagina')</code> · <code>cuerpo</code> → el JSON ya leído y validado (solo en <code>POST</code>/<code>PATCH</code>) · <code>base</code> → <code>"/v1"</code> · <code>ruta</code> · <code>cabeceras</code></td>
+              <td><code>{ status, cuerpo?, cabeceras? }</code>: el estado, el JSON a enviar y las cabeceras extra. <strong>Para fallar</strong>: <code>throw new ErrorHttp(estado, 'detalle para humanos')</code>; los errores del Modelo los traduce <code>traducirError</code>, la tabla que van a escribir.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="section-note">Nunca tocan <code>req</code> ni <code>res</code> de Node: de eso se ocupa el núcleo. Tampoco validan nada que el Modelo ya valida: si se descubren escribiendo <code>if (peso &gt; 100)</code> en una ruta, <strong>deténganse</strong>.</p>
+
+    <h3>Paso a paso</h3>
+    <ol class="pasos">
+      <li><strong>2A · Leer</strong> (≈ 10 min). Implementen <code>listarV1</code> y <code>obtener</code> y <strong>regístrenlos</strong> en la tabla de rutas junto con el resumen (recuerden: la URI de una evaluación lleva <code>{id}</code>). El Modelo ya sabe devolver la lista y una evaluación; usen <code>representarEvaluacion</code> para no filtrar nada interno. Prueben a mano: <code>curl -i localhost:3000/v1/evaluaciones</code> (¿qué estado y qué <code>Content-Type</code> ven?) Si quieren ver filas antes de poder crearlas (eso es 2B), creen el archivo <code>datos/notas.json</code> con <code>[{"id":1,"nombre":"Parcial 1","peso":30,"nota":4}]</code> y reinicien el servidor. Ejecuten <code>npm run test:api</code>: el grupo <strong>2A</strong> debe quedar completo. La app del navegador ya debería dibujar la lista (todavía no puede crear).</li>
+      <li><strong>2B · Crear y la tabla de estados</strong> (≈ 12 min). Primero, <code>ESTADO_POR_CODIGO</code> y <code>traducirError</code>: cada error del Modelo trae un <code>codigo</code> y ustedes deciden el estado HTTP (la tabla de abajo ayuda). Después, <code>crear</code>: debe usar <strong>solo</strong> <code>nombre</code>, <code>peso</code> y <code>nota</code> del cuerpo (el <code>id</code> lo decide el servidor), responder con el estado correcto para «creado», con la cabecera <code>Location</code> apuntando a la evaluación nueva y con su representación. Regístrenlo. <strong>Grupo 2B</strong> en verde.</li>
+      <li><strong>2C · Modificar y borrar</strong> (≈ 8 min). <code>calificar</code> cambia <em>solo</em> la nota (el cuerpo es <code>{ "nota": 4.5 }</code>, o <code>null</code> para quitarla) y devuelve la evaluación actualizada; <code>eliminar</code> responde sin cuerpo. Regístrenlos. <strong>Grupo 2C</strong> en verde. Con la app abierta ya pueden agregar, calificar y eliminar.</li>
+      <li><strong>2D · Errores que se pueden leer</strong> (≈ 5 min). Casi todo este grupo ya debe estar verde sin escribir código nuevo: el <code>405</code> con <code>Allow</code>, el <code>type</code> de cada problema y el <code>500</code> que no filtra detalles vienen de lo que ya hicieron y del núcleo. Compruébenlo con <code>curl</code> y respondan en <code>ENTREGA.md</code> la <strong>sección 2</strong> (con sus palabras). <strong>Provoquen</strong> un <code>405</code> (<code>curl -i -X PUT localhost:3000/v1/evaluaciones</code>) y miren la cabecera <code>Allow</code>.</li>
+    </ol>
+
+    <h3>Los errores del Modelo: ¿qué estado le corresponde a cada uno?</h3>
+    <p class="section-note">Tres grupos de situaciones: <em>el recurso no existe</em>; <em>el contenido enviado incumple una regla</em> (un valor inválido) y <em>el contenido choca con el estado actual</em> del sistema (algo ya existe, un tope se agotó). Los estados candidatos son <code>400</code>, <code>404</code>, <code>409</code> y <code>422</code>. Decidan y justifiquen en <code>ENTREGA.md</code> (sección 2).</p>
+    <div class="table-wrap">
+      <table class="plain wrap">
+        <thead><tr><th><code>codigo</code> del Modelo</th><th>Cuándo ocurre</th><th>Mensaje</th></tr></thead>
+        <tbody>
+          <tr><td><code>NO_EXISTE</code></td><td>El id no corresponde a ninguna evaluación</td><td>No existe la evaluación.</td></tr>
+          <tr><td><code>NOMBRE_OBLIGATORIO</code></td><td>El nombre está vacío</td><td>El nombre es obligatorio.</td></tr>
+          <tr><td><code>NOMBRE_LARGO</code></td><td>El nombre pasa de 40 caracteres</td><td>El nombre no puede superar 40 caracteres.</td></tr>
+          <tr><td><code>PESO_FUERA_DE_RANGO</code></td><td>El peso no es un número entre 1 y 100</td><td>El peso debe estar entre 1 y 100.</td></tr>
+          <tr><td><code>NOTA_FUERA_DE_RANGO</code></td><td>La nota no es un número entre 0 y 5</td><td>La nota debe estar entre 0 y 5.</td></tr>
+          <tr><td><code>PESOS_EXCEDEN_100</code></td><td>Los pesos sumarían más de 100 %</td><td>Los pesos no pueden sumar más de 100 % (te quedan X %).</td></tr>
+          <tr><td><code>NOMBRE_DUPLICADO</code></td><td>Ya hay una evaluación con ese nombre</td><td>Ya existe una evaluación con ese nombre.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout"><span class="label">Una cosa a la vez</span>
+      <p><code>npm test</code> muestra <strong>un grupo a la vez</strong>, con <em>esperado</em> contra <em>recibido</em>. Con <code>npm test -- --todo</code> ven todos los fallos y con <code>npm run test:api</code> solo los de esta parte. Si cambiaron un archivo y no ven efecto en el navegador o en <code>curl</code>, <strong>reinicien el servidor</strong> (con <code>npm run dev</code> se reinicia solo).</p>
+    </div>
+    <div class="callout warn"><span class="label">400, 404, 405, 409, 415, 422… ¿cuál?</span>
+      <p>No hay una respuesta única en la industria: hay <strong>convenciones</strong>. Las de este curso: <code>400</code> si la solicitud no se puede <em>entender</em> (JSON roto, no es un objeto, un parámetro de la dirección inválido); <code>415</code> si el formato no es JSON; <code>422</code> si se entiende pero un <em>valor</em> incumple una regla; <code>409</code> si choca con el <em>estado</em> actual; <code>404</code> si el recurso no existe; <code>405</code> si el método no existe en esa dirección. En un proyecto real documentan su convención; lo grave es cambiarla a mitad de camino.</p>
+    </div>
+    <p><strong>Listo cuando:</strong> <code>npm run test:api</code> muestra los cuatro grupos en verde y el grupo <em>Las rutas son el Controlador de la API</em> de <code>npm run arquitectura</code> también. Commit: <code>Parte 2: API v1</code>.</p>
+
+    <hr class="div">
+
+    <div class="part-head" id="p3"><h2>Parte 3 · El navegador: conectar el MVC</h2><span class="chip">25 min</span><span class="rol m">Modelo remoto</span><span class="rol c">Controlador</span></div>
+    <p class="section-note">La otra mitad. La Vista y el Controlador de la clase pasada esperan «un Modelo» que tenga <code>evaluaciones</code>, <code>resumen()</code>, <code>agregar</code>, <code>calificar</code>, <code>eliminar</code> y <code>suscribir</code>. Vamos a darles uno que <strong>pregunta todo al servidor</strong>: el <strong>Modelo remoto</strong>. Pregunta clave de esta parte: <strong>¿qué archivos del navegador no van a tener que tocar?</strong></p>
+<pre class="code"><code>NAVEGADOR
+  Vista ──lee──► Modelo remoto ◄──órdenes (await)── Controlador
+                       │
+                 cliente-api.js        (el único archivo con fetch)
+                       ║
+          ═══════ HTTP + JSON ═══════   el contrato: /v1, /v2
+                       ║
+SERVIDOR            núcleo HTTP          (404, 405, JSON, errores)
+                       │
+                 rutas.mjs               (el Controlador de la API)
+                       │
+                    Modelo ──► almacén   (las reglas; ni sabe de HTTP)</code></pre>
+    <ol class="pasos">
+      <li><strong>3A · El Modelo remoto</strong> (≈ 15 min). Abran <code>cliente/src/modelo-remoto.js</code>. <code>sincronizar()</code> ya viene resuelto: pide la lista y el resumen, los guarda y avisa a los suscriptores. Ustedes escriben: <strong>(a)</strong> <code>agregar</code>, <code>calificar</code> y <code>eliminar</code>, cada una con <strong>una</strong> solicitud a la API que diseñaron (<code>this.#api.solicitar(método, recurso, cuerpo)</code>; el recurso va sin la versión); <strong>(b)</strong> <code>#ordenar</code>, que ejecuta la orden y, si fue aceptada, vuelve a sincronizar (<em>el servidor es la verdad</em>); y <strong>(c)</strong> <code>traducir</code>, que convierte un fallo de HTTP en un error que el Controlador entienda:
+        <div class="table-wrap" style="margin-top:8px">
+          <table class="plain wrap">
+            <thead><tr><th>Lo que ocurrió</th><th>El Modelo remoto lanza</th><th>El Controlador muestra</th></tr></thead>
+            <tbody>
+              <tr><td>La API responde <code>404</code>, <code>409</code> o <code>422</code></td><td><code>ErrorDeReglas</code> con el <code>detail</code> del problema</td><td>El mensaje del servidor, tal cual</td></tr>
+              <tr><td>La API responde otro <code>4xx</code> o <code>5xx</code></td><td><code>ErrorDeServicio</code></td><td>Un aviso general («No se pudo completar la operación…»)</td></tr>
+              <tr><td>No hubo respuesta (servidor apagado, sin red)</td><td><code>ErrorDeServicio</code></td><td>El mismo aviso general</td></tr>
+              <tr><td>Un fallo de programación (<code>TypeError</code>…)</td><td>El mismo error</td><td>Nada: no se esconde, se vuelve a lanzar</td></tr>
+            </tbody>
+          </table>
+        </div>
+        Si la API responde <code>404</code> al calificar o eliminar, la evaluación ya no existe (alguien la borró desde otro aparato): además de avisar, pongan la pantalla al día sincronizando. <code>npm run test:cliente</code>: el grupo <strong>3A</strong> debe quedar completo.</li>
+      <li><strong>3B · El Controlador espera</strong> (≈ 5 min). Abran <code>cliente/src/controlador.js</code>. Las órdenes al Modelo ahora devuelven <strong>promesas</strong>. Hay tres TODO: esperar la orden antes de preguntar si fue aceptada (si no, el formulario se limpiaría antes de que el servidor conteste), convertir <code>#intentar</code> en <code>async</code> con <code>await</code> (si no, el <code>try/catch</code> no atrapa el rechazo y el error se pierde) y distinguir <code>ErrorDeServicio</code>. <strong>Grupo 3B</strong> en verde.
+        <br><em>Pregunta para el equipo:</em> ¿qué pasaría en pantalla si olvidan el <code>await</code>? Pruébenlo y anoten qué ven.</li>
+      <li><strong>3C · Probarlo de verdad</strong> (≈ 5 min). Con el servidor corriendo, recarguen <code>http://localhost:3000/</code> y repitan esta lista (borren antes <code>datos/notas.json</code> y reinicien el servidor para partir de cero):</li>
+    </ol>
+    <div class="table-wrap">
+      <table class="plain wrap">
+        <thead><tr><th>#</th><th>Acción</th><th>Debe verse</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Agregar <em>Parcial 1</em>, peso 30, nota 3.5</td><td>Aporte <code>1.05</code> · Acumulado <code>1.05</code> · 30 % / 70 % · Necesaria <code>2.79</code> · «En camino: necesitas 2.79 en lo que falta.»</td></tr>
+          <tr><td>2</td><td>Agregar <em>Parcial 2</em>, peso 30, <strong>sin nota</strong></td><td>Aporte <code>—</code> · mismos números (el peso pendiente sigue en 70 %)</td></tr>
+          <tr><td>3</td><td>Agregar <em>Final</em>, peso 50</td><td>Error: «Los pesos no pueden sumar más de 100 % (te quedan 40 %).» · el formulario <strong>conserva</strong> lo escrito. <strong>Ese mensaje lo escribió el servidor.</strong></td></tr>
+          <tr><td>4</td><td>Agregar otra evaluación llamada <em>parcial 1</em></td><td>Error: «Ya existe una evaluación con ese nombre.» (¿qué estado devolvió el servidor? Miren la terminal.)</td></tr>
+          <tr><td>5</td><td>Poner nota 4 a <em>Parcial 2</em></td><td>Acumulado <code>2.25</code> · 60 % / 40 % · Necesaria <code>1.88</code></td></tr>
+          <tr><td>6</td><td>Escribir 7 como nota de una fila</td><td>Error: «La nota debe estar entre 0 y 5.» · el campo <strong>vuelve</strong> a su valor anterior</td></tr>
+          <tr><td>7</td><td>Eliminar <em>Parcial 1</em></td><td>Acumulado <code>1.20</code> · 30 % / 70 % · Necesaria <code>2.58</code></td></tr>
+          <tr><td>8</td><td>Recargar la página</td><td>Todo sigue igual: <strong>los datos viven en el servidor</strong>, no en el navegador</td></tr>
+          <tr><td>9</td><td>Abrir <code>http://localhost:3000/</code> en una <strong>ventana de incógnito</strong></td><td>Las mismas evaluaciones: otro «aparato», la misma verdad</td></tr>
+          <tr><td>10</td><td>Detener el servidor (<kbd>Ctrl</kbd> + <kbd>C</kbd>) y agregar algo</td><td>Aviso general: «No se pudo completar la operación…». Al reiniciar el servidor, la app sigue funcionando <strong>sin recargar</strong>.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout ok"><span class="label">Qué deben observar</span>
+      <p><code>git diff --stat</code> de esta parte debe mostrar cambios <strong>solo</strong> en <code>modelo-remoto.js</code> y <code>controlador.js</code>. <code>vista.js</code>, <code>termometro-vista.js</code> e <code>index.html</code> siguen intactos: la Vista no sabe que el Modelo ahora vive al otro lado de un cable. Esa es la recompensa de haber separado las piezas la clase pasada.</p>
+    </div>
+    <p><strong>Listo cuando:</strong> la lista de arriba da lo esperado, <code>npm run test:cliente</code> está en verde y el grupo <em>La Vista y el Controlador del navegador respetan las capas</em> de <code>npm run arquitectura</code> también. Commit: <code>Parte 3: cliente MVC conectado</code>. Anoten el recorrido de «agregar» para <code>ENTREGA.md</code>, sección 3.</p>
+
+    <hr class="div">
+
+    <div class="part-head" id="p4"><h2>Parte 4 · Versionar: la v2</h2><span class="chip">25 min</span></div>
+    <p class="section-note">Hay un problema de diseño: <code>GET /v1/evaluaciones</code> devuelve un <strong>arreglo pelado</strong>, y un arreglo no tiene dónde decir «hay 73 en total, esta es la página 2». Cambiarlo a un objeto <strong>rompería a todos los clientes que ya existen</strong> (incluido el compañero que ya usa su API). La solución: una versión nueva, la <strong>v2</strong>, con la forma nueva, y la v1 intacta pero con avisos de que va a retirarse.</p>
+    <ol class="pasos">
+      <li><strong>4A · La lista de la v2</strong> (≈ 12 min). Implementen <code>listarV2</code> en <code>rutas.mjs</code>. El comentario trae los pasos. El contrato:
+        <div class="table-wrap" style="margin-top:8px">
+          <table class="plain wrap">
+            <thead><tr><th>Parámetro (en la consulta)</th><th>Valores</th><th>Por defecto</th><th>Si es inválido</th></tr></thead>
+            <tbody>
+              <tr><td><code>pagina</code></td><td>entero ≥ 1</td><td>1</td><td rowspan="4">Estado <code>400</code>, y el <code>detail</code> nombra el parámetro entre comillas</td></tr>
+              <tr><td><code>porPagina</code></td><td>entero de 1 a 50</td><td>10</td></tr>
+              <tr><td><code>estado</code></td><td><code>pendiente</code> (sin nota) o <code>calificada</code></td><td>todas</td></tr>
+              <tr><td><code>orden</code></td><td><code>id</code>, <code>nombre</code>, <code>-nombre</code>, <code>peso</code>, <code>-peso</code> (el guion invierte)</td><td><code>id</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+<pre class="code"><code>GET /v2/evaluaciones?porPagina=2&amp;pagina=2
+200 OK
+Link: &lt;/v2/evaluaciones?pagina=1&amp;porPagina=2&gt;; rel="prev",
+      &lt;/v2/evaluaciones?pagina=3&amp;porPagina=2&gt;; rel="next"      (una sola cabecera)
+
+{ "datos": [ { "id": 3, "nombre": "Taller", "peso": 20, "nota": null },
+             { "id": 4, "nombre": "Quiz",   "peso": 10, "nota": 3 } ],
+  "paginacion": { "pagina": 2, "porPagina": 2, "total": 5, "totalPaginas": 3 } }</code></pre>
+        Una página después del final <strong>no es un error</strong>: responde <code>200</code> con <code>"datos": []</code>. Cuando una página tiene vecina, la cabecera <code>Link</code> (RFC 8288) dice dónde está, <strong>conservando</strong> el filtro, el orden y <code>porPagina</code>. Registren la ruta; <code>npm run test:versionado</code>: grupo <strong>4A</strong> en verde.</li>
+      <li><strong>4B · Avisar que la v1 se retira</strong> (≈ 6 min). Vuelvan a <code>listarV1</code>: sigue devolviendo <strong>el mismo arreglo</strong>, pero ahora agrega tres cabeceras. Las fechas ya están en el archivo (<code>DEPRECIADA_DESDE</code> y <code>SE_RETIRA_EN</code>):
+        <div class="table-wrap" style="margin-top:8px">
+          <table class="plain wrap">
+            <thead><tr><th>Cabecera</th><th>Qué dice</th><th>Formato</th><th>Ejemplo</th></tr></thead>
+            <tbody>
+              <tr><td><code>Deprecation</code> (RFC 9745)</td><td>Desde cuándo está obsoleta</td><td>Segundos Unix precedidos de <code>@</code></td><td><code>@1790812800</code></td></tr>
+              <tr><td><code>Sunset</code> (RFC 8594)</td><td>Cuándo se retira. No puede ser anterior a <code>Deprecation</code></td><td>Fecha HTTP (<code>toUTCString()</code>)</td><td><code>Fri, 31 Dec 2027 23:59:59 GMT</code></td></tr>
+              <tr><td><code>Link</code> con <code>rel="successor-version"</code> (RFC 5829)</td><td>Dónde está la versión nueva</td><td><code>&lt;URI&gt;; rel="successor-version"</code></td><td><code>&lt;/v2/evaluaciones&gt;; rel="successor-version"</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+        Solo <strong>lo que cambió</strong> está obsoleto: <code>GET /v1/resumen</code> y los demás endpoints de la v1 <strong>no</strong> llevan avisos. Grupo <strong>4B</strong> en verde.</li>
+      <li><strong>4C · Registrar la v2</strong> (≈ 4 min). Todo lo que no cambió (crear, obtener, calificar, eliminar, resumen) debe funcionar igual en <code>/v2/…</code>, <strong>sin copiar y pegar</strong>: agrupen esas entradas con <code>paraVersiones(['v1', 'v2'], [...])</code> (sin el prefijo <code>/v1</code> en las rutas) y registren aparte las dos listas. Cuidado: <code>Location</code> de un <code>POST</code> a <code>/v2/…</code> debe apuntar dentro de <code>/v2/</code> (hay un dato en la solicitud, <code>base</code>, que ayuda). Grupo <strong>4C</strong> en verde.</li>
+      <li><strong>4D · Migrar el cliente</strong> (≈ 3 min). Con la v1 abran <code>http://localhost:3000/</code> y la <strong>consola</strong> del navegador (<kbd>F12</kbd> → Console): <code>cliente-api.js</code> imprime <strong>una advertencia</strong> («API obsoleta: GET /v1/evaluaciones · se retira el … · usa /v2/evaluaciones»). Miren también la pestaña <strong>Network</strong>: ahí están las tres cabeceras. Ahora cambien en <code>cliente/src/main.js</code> <code>version: 'v1'</code> por <code>'v2'</code>, recarguen y comprueben que todo funciona igual y que <strong>la advertencia desapareció</strong>. Peguen una captura en <code>ENTREGA.md</code>, sección 5.</li>
+    </ol>
+    <div class="callout warn"><span class="label">¿Qué cambios rompen y cuáles no?</span>
+      <p>Agregar un campo opcional a una respuesta o un endpoint nuevo <strong>no rompe</strong> a nadie. Quitar o renombrar un campo, cambiar su tipo, cambiar la forma de la respuesta (arreglo → objeto) o exigir un campo nuevo <strong>sí rompe</strong>. Clasifiquen ocho cambios posibles en <code>ENTREGA.md</code>, sección 4, y escriban su plan de retiro de la v1.</p>
+    </div>
+    <p><strong>Listo cuando:</strong> <code>npm run test:versionado</code> está en verde (17 pruebas) y el cliente funciona con la v2 sin advertencias. Commit: <code>Parte 4: v2 y obsolescencia de v1</code>.</p>
+
+    <hr class="div">
+
+    <div class="part-head" id="p5"><h2>Parte 5 · Documentar con OpenAPI</h2><span class="chip">15 min</span></div>
+    <p class="section-note">Una API sin documentación solo la puede usar quien la escribió. <strong>OpenAPI</strong> (la especificación estándar, antes llamada Swagger) describe en un solo documento las rutas, lo que recibe y lo que devuelve cada una, y las herramientas lo convierten en documentación navegable, clientes o pruebas. Su servidor ya lo publica en <code>http://localhost:3000/openapi.json</code>: ábranlo y recórranlo. Está en <code>servidor/openapi.mjs</code> como un objeto de JavaScript.</p>
+    <ol class="pasos">
+      <li><strong>5A · Leer lo que ya existe</strong> (≈ 3 min). Miren cómo está documentado <code>crearEvaluacion_v1</code>: el cuerpo (<code>requestBody</code>), cada estado de <code>responses</code> con su esquema, la cabecera <code>Location</code> y cómo se reutilizan los esquemas con <code>$ref</code>. Ejecuten <code>npm run test:docs</code> y lean los mensajes: dicen exactamente qué falta.</li>
+      <li><strong>5B · La v2 y la obsolescencia</strong> (≈ 8 min). Resuelvan los tres TODO del archivo: agreguen <code>'v2'</code> a las versiones, documenten <code>GET /v2/evaluaciones</code> (parámetros con tipo, límites, valores permitidos y valor por defecto; la cabecera <code>Link</code>; el esquema <code>PaginaDeEvaluaciones</code> que ya existe; el <code>400</code>) y marquen <code>GET /v1/evaluaciones</code> como <code>deprecated: true</code> con las cabeceras <code>Deprecation</code>, <code>Sunset</code> y <code>Link</code> en su respuesta <code>200</code>.</li>
+      <li><strong>5C · Que no mienta</strong> (≈ 4 min). El grupo <strong>5B</strong> de <code>npm run test:docs</code> compara el documento con la API <em>real</em> en las dos direcciones: cada ruta del código debe estar documentada, cada operación documentada debe existir, y <strong>cada estado HTTP que la API devuelve debe estar declarado</strong>. Si la prueba dice «respondió 409 pero la documentación no declara ese estado», una de las dos mintió. Arréglenlo donde corresponda.</li>
+    </ol>
+    <div class="callout ok"><span class="label">Si quieren verla bonita (opcional)</span>
+      <p>Copien el contenido de <code>/openapi.json</code> y péguenlo en el <em>Swagger Editor</em> (editor.swagger.io): muestra la documentación navegable con las operaciones, los parámetros y los esquemas. Es su API de práctica, sin datos sensibles; con una API real de una empresa, usarían una herramienta instalada en su propio equipo.</p>
+    </div>
+    <p><strong>Listo cuando:</strong> <code>npm run test:docs</code> está en verde. Commit: <code>Parte 5: documentación OpenAPI</code>.</p>
+
+    <hr class="div">
+
+    <div class="part-head" id="p6"><h2>Parte 6 · Medir y entregar</h2><span class="chip">10 min</span></div>
+    <ol class="pasos">
+      <li><strong>Todo en verde.</strong> Ejecuten <code>npm test</code>: deben pasar las <strong>104 pruebas</strong> (más las 6 del reto opcional, que no cuentan si no lo hicieron). Peguen el resultado en <code>ENTREGA.md</code>, sección 5.</li>
+      <li><strong>Dibujen el flujo</strong> de «agregar una evaluación», desde que el usuario presiona <strong>Agregar</strong> hasta que ve la fila nueva, marcando en cada paso <strong>el archivo y el método</strong> que actúa y <strong>dónde cruza el cable</strong> (<code>ENTREGA.md</code>, sección 3). Pista: son al menos diez pasos y pasan por la Vista, el Controlador, el Modelo remoto, <code>cliente-api.js</code>, el núcleo, las rutas, el Modelo, el almacén y de vuelta.</li>
+      <li><strong>Reflexionen</strong> sobre las cinco preguntas de <code>ENTREGA.md</code>, sección 6. Con sus palabras, no las de la presentación.</li>
+      <li><strong>Suban todo:</strong>
+<pre class="code"><code>git add -A
+git commit -m "Entrega del laboratorio de la API"
+git pull
+git push</code></pre></li>
+    </ol>
+    <h3>Retos opcionales <span class="chip bonus">bonus</span></h3>
+    <ul class="lista">
+      <li><strong>Que nadie pise el trabajo de otro.</strong> Dos aparatos leen la misma evaluación; el primero la califica y el segundo, que sigue viendo lo viejo, la califica también: sin protección, pisa la nota del primero sin enterarse. Implementen <code>ETag</code> en <code>GET /v1/evaluaciones/{id}</code>, <code>304</code> con <code>If-None-Match</code> y <code>412 Precondition Failed</code> con <code>If-Match</code> en el <code>PATCH</code> (<code>npm run test:reto</code>). Documenten también el <code>304</code> y el <code>412</code>.</li>
+      <li><strong>Rompan la arquitectura a propósito.</strong> Escriban <code>if (peso &gt; 100)</code> dentro de <code>crear</code> en <code>rutas.mjs</code>, o <code>fetch(...)</code> en la Vista, y ejecuten <code>npm run arquitectura</code>. ¿Qué prueba lo detecta y con qué mensaje?</li>
+      <li><strong>Diseñen, sin programar:</strong> <code>POST</code> no es idempotente, así que si el usuario hace doble clic en «Agregar» con mala conexión podrían crearse dos evaluaciones. ¿Cómo lo evitarían con un identificador que mande el cliente (una «clave de idempotencia»)? Escriban el diseño en cinco líneas.</li>
+    </ul>
+
+    <hr class="div">
+
+    <h2 id="entrega">Entrega y rúbrica</h2>
+    <p>Entreguen el enlace del repositorio del equipo (público). Todo lo escrito va en <code>ENTREGA.md</code>.</p>
+    <ul class="check">
+      <li><span><code>npm test</code> en verde: 104 de 104 pruebas (sin contar el reto).</span></li>
+      <li><span>Un commit por parte, con mensajes que digan qué hicieron.</span></li>
+      <li><span>Contrato diseñado antes de programar (§1) y las decisiones de estado justificadas (§2).</span></li>
+      <li><span>Diagrama del flujo con archivos, métodos y el cable (§3).</span></li>
+      <li><span>Clasificación de cambios y plan de retiro de la v1 (§4), con la captura de las cabeceras (§5).</span></li>
+      <li><span>Reflexión completa, con respuestas propias (§6).</span></li>
+    </ul>
+    <div class="table-wrap">
+      <table class="plain wrap">
+        <thead><tr><th>Criterio</th><th>Qué se mira</th><th>Puntos</th></tr></thead>
+        <tbody>
+          <tr><td>Contrato y decisiones</td><td>Diseño hecho <em>antes</em> del código, URI como sustantivos, estados justificados con criterio (§1 y §2).</td><td>4</td></tr>
+          <tr><td>La API v1</td><td>Los cuatro grupos de <code>npm run test:api</code> en verde y la app funcionando contra ella.</td><td>5</td></tr>
+          <tr><td>El navegador</td><td>Modelo remoto y Controlador asíncrono: <code>npm run test:cliente</code> en verde y la lista de la Parte 3 cumplida.</td><td>3</td></tr>
+          <tr><td>Versionado</td><td><code>npm run test:versionado</code> en verde, cliente migrado a la v2 y clasificación de cambios acertada (§4).</td><td>3</td></tr>
+          <tr><td>Documentación</td><td><code>npm run test:docs</code> en verde: el documento coincide con el código.</td><td>2</td></tr>
+          <tr><td>Arquitectura</td><td><code>npm run arquitectura</code> en verde: cada pieza en su papel, a los dos lados del cable.</td><td>1</td></tr>
+          <tr><td>Flujo y reflexión</td><td>Diagrama completo y respuestas propias, concretas y ligadas a lo que hicieron (§3 y §6).</td><td>2</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="section-note">El reto opcional suma hasta <strong>1 punto de bonificación</strong>.</p>
+
+    <hr class="div">
+
+    <h2 id="problemas">Problemas frecuentes</h2>
+    <details><summary>«node» o «npm» no se reconocen</summary>
+      <p>Falta instalar Node.js (versión LTS) o hay que <strong>cerrar y volver a abrir la terminal</strong> después de instalarlo. Comprueben con <code>node -v</code>.</p></details>
+    <details><summary>Cambié <code>rutas.mjs</code> y el servidor sigue haciendo lo mismo</summary>
+      <p>El servidor carga el código <strong>una sola vez</strong> al arrancar. Deténganlo con <kbd>Ctrl</kbd> + <kbd>C</kbd> y vuelvan a ejecutar <code>npm start</code>, o usen <code>npm run dev</code>, que lo reinicia solo al guardar (necesita Node 18.11 o superior). Las pruebas, en cambio, levantan su propio servidor cada vez: no hace falta reiniciar nada para <code>npm test</code>.</p></details>
+    <details><summary>La pantalla dice «No existe /v1/evaluaciones» o «El servidor no pudo completar la operación»</summary>
+      <p>Es lo esperado <strong>antes</strong> de terminar la Parte 2: la API todavía no tiene esa ruta. Si ya la registraron, miren la <strong>terminal del servidor</strong>: cada solicitud aparece con su estado, y un error inesperado imprime su traza ahí (nunca en el navegador).</p></details>
+    <details><summary>El puerto 3000 está ocupado</summary>
+      <p>Elijan otro:</p>
+<pre class="code"><code># macOS / Linux
+PORT=3001 npm start
+# Windows PowerShell
+$env:PORT=3001; npm start
+# Windows cmd (las comillas evitan que se cuele un espacio al final)
+set "PORT=3001" &amp;&amp; npm start</code></pre></details>
+    <details><summary>En Windows <code>curl</code> no hace lo que dice la guía</summary>
+      <p>En PowerShell, <code>curl</code> es un alias de otro comando. Escriban <code>curl.exe</code>. Y el JSON necesita comillas dobles escapadas: <code>-d "{\"nombre\":\"Parcial 1\",\"peso\":30}"</code>. Si les cuesta, usen la extensión <em>REST Client</em> de VS Code o prueben solo los <code>GET</code> con el navegador.</p></details>
+    <details><summary>Me aparecen datos viejos de otras pruebas</summary>
+      <p>El servidor guarda en <code>datos/notas.json</code>. Para empezar de cero: detengan el servidor, borren ese archivo y arránquenlo de nuevo. Las pruebas automáticas no lo usan (trabajan en memoria).</p></details>
+    <details><summary>Cambié el código del navegador y la página sigue igual</summary>
+      <p>Recarguen con <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>R</kbd> y abran la consola (<kbd>F12</kbd> → Console): un error de sintaxis en un módulo detiene toda la app y se ve ahí.</p></details>
+    <details><summary>Una prueba espera un estado y mi API devuelve otro</summary>
+      <p>Lean el mensaje: dice qué estado esperaba y cuál llegó. Si discrepan por <strong>criterio</strong> (por ejemplo, 400 contra 422), vuelvan a la tabla de convenciones de la Parte 2: en el curso las pruebas fijan una convención, y lo importante es que ustedes la puedan <strong>justificar</strong>.</p></details>
+    <details><summary>«Falta documentar…» o «la documentación no declara ese estado»</summary>
+      <p>Abran <code>servidor/openapi.mjs</code> y agreguen la operación o el estado que dice el mensaje (copien la forma de uno que ya exista). Si más bien la <em>API</em> devuelve algo que no debería, arréglenla a ella: la documentación describe lo que quieren prometer.</p></details>
+    <details><summary>Las pruebas de arquitectura fallan con «métodos sin implementar»</summary>
+      <p>Todavía queda algún <code>throw new Error('TODO ...')</code> en una pieza. Búsquenlo con <kbd>Ctrl</kbd> + <kbd>F</kbd> y reemplácenlo por código real.</p></details>
+    <details><summary>Git: «rejected» al hacer push</summary>
+      <p>Alguien del equipo subió antes. Hagan <code>git pull</code>, resuelvan los conflictos si los hay, y vuelvan a hacer <code>git push</code>. Para no pisarse, repartan archivos distintos (uno el servidor, otro el cliente).</p></details>
+    <details><summary>Plan B: no puedo instalar Node en este computador</summary>
+      <p>Trabajen en pareja con un compañero que sí lo tenga (cada uno puede seguir en su propio repositorio y comparar). O abran el repositorio de su equipo en <strong>GitHub Codespaces</strong> (botón verde <em>Code</em> → pestaña <em>Codespaces</em>), un editor en el navegador que normalmente ya trae Node.js; tiene una cuota gratuita limitada por mes. Allí ejecutan <code>npm run dev</code> y abren el puerto 3000 desde la ventana de <em>Ports</em>.</p></details>
+
+    <hr class="div">
+
+    <h2 id="vocabulario">Vocabulario</h2>
+    <dl class="vocab">
+      <dt>API</dt><dd>El contrato por el que una pieza de software se ofrece a otras: qué se puede pedir, con qué forma y qué se recibe. Una API web va por HTTP.</dd>
+      <dt>REST</dt><dd>Un estilo de arquitectura (Roy Fielding, 2000), no un protocolo: cliente-servidor, sin estado, con caché, interfaz uniforme, por capas. «JSON sobre HTTP» no es REST por sí solo.</dd>
+      <dt>Recurso</dt><dd>Una «cosa» con nombre que la API expone (una evaluación, el resumen). Se identifica con una URI.</dd>
+      <dt>Representación</dt><dd>La forma en que un recurso viaja por el cable (aquí, JSON). No es el objeto interno del Modelo.</dd>
+      <dt>Endpoint</dt><dd>Una combinación de método HTTP y URI que ofrece la API (<code>GET /v1/evaluaciones/{id}</code>).</dd>
+      <dt>Método seguro</dt><dd>El que no cambia nada en el servidor (<code>GET</code>).</dd>
+      <dt>Idempotente</dt><dd>Repetir la solicitud deja el servidor en el mismo estado que hacerla una vez (<code>PUT</code>, <code>DELETE</code>, <code>GET</code>).</dd>
+      <dt>Código de estado</dt><dd>El número con que el servidor dice cómo le fue a la solicitud: 2xx éxito, 3xx redirección o «no cambió», 4xx culpa del cliente, 5xx culpa del servidor.</dd>
+      <dt>Problem Details</dt><dd>El formato estándar de errores de HTTP (RFC 9457, <code>application/problem+json</code>): <code>type</code>, <code>title</code>, <code>status</code>, <code>detail</code> e <code>instance</code>.</dd>
+      <dt>Versionado</dt><dd>Publicar cambios incompatibles bajo una versión nueva (<code>/v2</code>) sin romper a quien usa la anterior.</dd>
+      <dt>Obsolescencia (<em>deprecation</em>)</dt><dd>Avisar que algo se dejará de usar (cabecera <code>Deprecation</code>) y cuándo dejará de funcionar (<code>Sunset</code>).</dd>
+      <dt>Cambio que rompe</dt><dd>Un cambio que obliga a los clientes existentes a modificarse para seguir funcionando.</dd>
+      <dt>OpenAPI</dt><dd>El formato estándar para describir una API REST: rutas, parámetros, cuerpos, respuestas y esquemas.</dd>
+      <dt>ETag</dt><dd>Una «huella» de la versión actual de un recurso; sirve para no reenviar lo que no cambió y para no pisar cambios ajenos.</dd>
+      <dt>Prueba de arquitectura</dt><dd>Una regla de diseño que una máquina revisa sola (en inglés, <em>fitness function</em>): por ejemplo, «las rutas no tienen reglas de negocio».</dd>
+    </dl>
+
+    <footer>
+      <span>Laboratorio API · Arquitectura de Software</span>
+      <span>MVC → API REST → v1 · v2 · OpenAPI</span>
+    </footer>
+  </div>
+</div>
+
+<script>
+// Agrega un botón "Copiar" a cada bloque de código.
+document.querySelectorAll("pre.code").forEach(function (pre) {
+  var btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "copy";
+  btn.textContent = "Copiar";
+  btn.setAttribute("aria-label", "Copiar el código");
+  btn.addEventListener("click", async function () {
+    var texto = pre.querySelector("code").innerText;
+    try {
+      await navigator.clipboard.writeText(texto);
+      btn.textContent = "Copiado";
+    } catch (e) {
+      var r = document.createRange(); r.selectNodeContents(pre.querySelector("code"));
+      var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+      btn.textContent = "Seleccionado: Ctrl/Cmd + C";
+    }
+    setTimeout(function () { btn.textContent = "Copiar"; }, 2200);
+  });
+  pre.appendChild(btn);
+});
+</script>
+</body>
+</html>

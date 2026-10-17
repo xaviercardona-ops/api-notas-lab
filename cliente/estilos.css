@@ -1,0 +1,121 @@
+/* Estilos compartidos por la versión espagueti (espagueti.html) y la versión MVC (index.html).
+   No hace falta tocar este archivo. */
+
+:root {
+  --papel: #f3f1ea;
+  --hoja: #ffffff;
+  --tinta: #21241f;
+  --suave: #5c6158;
+  --linea: #dbd7c9;
+  --modelo: #1f5f8b;
+  --vista: #a84a14;
+  --ctrl: #3a6330;
+  --ok: #2f6b3a;
+  --ok-fondo: #e1efdc;
+  --camino: #1f5f8b;
+  --camino-fondo: #dbe8f2;
+  --riesgo: #8a5d0f;
+  --riesgo-fondo: #f6e8c8;
+  --mal: #a8362a;
+  --mal-fondo: #f6dad6;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--papel);
+  color: var(--tinta);
+}
+
+main {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 24px 16px 64px;
+  display: grid;
+  gap: 16px;
+}
+
+h1 { margin: 0; font-size: 28px; line-height: 1.2; }
+.sub { margin: 4px 0 0; color: var(--suave); }
+.aviso {
+  margin: 12px 0 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--riesgo-fondo);
+  color: var(--riesgo);
+  font-size: 14px;
+}
+
+.tarjeta {
+  background: var(--hoja);
+  border: 1px solid var(--linea);
+  border-radius: 12px;
+  padding: 16px 20px;
+}
+.tarjeta h2 { margin: 0 0 12px; font-size: 18px; }
+
+form {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr auto;
+  gap: 12px;
+  align-items: end;
+}
+label { display: grid; gap: 4px; font-size: 14px; color: var(--suave); }
+input {
+  width: 100%;
+  font: inherit;
+  padding: 8px 10px;
+  border: 1px solid var(--linea);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--tinta);
+}
+input:focus-visible, button:focus-visible { outline: 2px solid var(--modelo); outline-offset: 2px; }
+button {
+  font: inherit;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--modelo);
+  color: #fff;
+  cursor: pointer;
+}
+button:hover { filter: brightness(1.1); }
+td button { background: transparent; color: var(--mal); padding: 4px 8px; border: 1px solid var(--linea); }
+
+#error {
+  margin: 12px 0 0;
+  min-height: 1.5em;
+  color: var(--mal);
+  font-weight: 600;
+}
+
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--linea); }
+th { font-size: 13px; color: var(--suave); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+td input { width: 88px; }
+#vacio { margin: 12px 0 0; color: var(--suave); }
+
+dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin: 0; }
+dl div { background: var(--papel); border-radius: 8px; padding: 10px 12px; }
+dt { font-size: 13px; color: var(--suave); }
+dd { margin: 2px 0 0; font-size: 24px; font-weight: 700; }
+
+.estado { margin: 14px 0 0; padding: 10px 14px; border-radius: 8px; font-weight: 600; }
+.estado.ok { background: var(--ok-fondo); color: var(--ok); }
+.estado.en-camino { background: var(--camino-fondo); color: var(--camino); }
+.estado.riesgo { background: var(--riesgo-fondo); color: var(--riesgo); }
+.estado.imposible { background: var(--mal-fondo); color: var(--mal); }
+
+/* Segunda vista (Parte 5B): el termómetro de aprobación */
+.termometro { position: relative; height: 22px; background: var(--papel); border: 1px solid var(--linea); border-radius: 11px; overflow: hidden; }
+.termometro .relleno { height: 100%; width: 0; background: var(--modelo); transition: width .25s ease; }
+.termometro .linea { position: absolute; top: 0; bottom: 0; width: 3px; background: var(--vista); }
+.leyenda { margin: 8px 0 0; font-size: 14px; color: var(--suave); }
+
+@media (max-width: 640px) {
+  form { grid-template-columns: 1fr; }
+  td input { width: 72px; }
+}

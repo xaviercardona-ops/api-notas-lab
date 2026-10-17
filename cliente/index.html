@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Notas del semestre · MVC + API</title>
+<link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+<!--
+  Esta página es solo el ESQUELETO de la pantalla (HTML estático): no contiene lógica.
+  El comportamiento lo ponen los tres roles de MVC, ensamblados en src/main.js.
+  Lo nuevo respecto a la clase pasada: el Modelo ya no guarda nada aquí; le pregunta todo a la API.
+-->
+<main id="app">
+  <header>
+    <h1>Notas del semestre</h1>
+    <p class="sub">Calcula cuánto necesitas en lo que falta para aprobar. Ahora los datos viven en el servidor.</p>
+  </header>
+
+  <section class="tarjeta">
+    <h2>Nueva evaluación</h2>
+    <form id="form">
+      <label>Nombre <input id="nombre" type="text"></label>
+      <label>Peso (%) <input id="peso" type="number" step="any"></label>
+      <label>Nota (0 a 5, opcional) <input id="nota" type="number" step="any"></label>
+      <button type="submit">Agregar</button>
+    </form>
+    <p id="error" role="alert"></p>
+  </section>
+
+  <section class="tarjeta">
+    <h2>Evaluaciones</h2>
+    <table>
+      <thead><tr><th>Nombre</th><th>Peso</th><th>Nota</th><th>Aporte</th><th></th></tr></thead>
+      <tbody id="tabla"></tbody>
+    </table>
+    <p id="vacio">Aún no hay evaluaciones.</p>
+  </section>
+
+  <section class="tarjeta">
+    <h2>Resumen</h2>
+    <dl>
+      <div><dt>Acumulado</dt><dd id="acumulado">0.00</dd></div>
+      <div><dt>Peso calificado</dt><dd id="pesoCalificado">0 %</dd></div>
+      <div><dt>Peso pendiente</dt><dd id="pesoPendiente">100 %</dd></div>
+      <div><dt>Nota necesaria en lo que falta</dt><dd id="necesaria">—</dd></div>
+    </dl>
+    <p id="estado" class="estado en-camino"></p>
+  </section>
+
+  <section class="tarjeta">
+    <h2>Termómetro de aprobación</h2>
+    <div id="termometro"></div>
+  </section>
+</main>
+
+<script type="module" src="src/main.js"></script>
+</body>
+</html>

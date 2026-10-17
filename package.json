@@ -1,0 +1,22 @@
+{
+  "name": "api-notas-lab",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Laboratorio de Arquitectura de Software: ponerle una API REST (con versionado y documentación) a la aplicación MVC de Notas del semestre",
+  "scripts": {
+    "start": "node servidor/main.mjs",
+    "dev": "node --watch servidor/main.mjs",
+    "test": "node pruebas/ejecutar.mjs",
+    "test:modelo": "node pruebas/ejecutar.mjs modelo",
+    "test:api": "node pruebas/ejecutar.mjs api",
+    "test:cliente": "node pruebas/ejecutar.mjs cliente",
+    "test:versionado": "node pruebas/ejecutar.mjs versionado",
+    "test:docs": "node pruebas/ejecutar.mjs documentacion",
+    "arquitectura": "node pruebas/ejecutar.mjs arquitectura",
+    "test:reto": "node pruebas/ejecutar.mjs reto"
+  },
+  "engines": {
+    "node": ">=18.2"
+  }
+}

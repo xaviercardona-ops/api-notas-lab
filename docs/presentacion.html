@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Diseño de APIs — Presentación</title>
+<meta name="description" content="Presentación del tema Diseño de soluciones basadas en APIs de Arquitectura de Software: REST, endpoints, métodos y estados, errores, listas, versionado, OpenAPI y el caso de MVC a los dos lados del cable. 24 diapositivas.">
+<meta name="theme-color" content="#1d201c">
+<meta property="og:title" content="Diseño de APIs — Presentación">
+<meta property="og:description" content="Arquitectura de Software · Diseño de APIs · 24 diapositivas">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400..700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root { --k: 1; --cols: 1; --accent: #3d8fc9; --accent-on-dark: #6fb1e0; }
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #0f110e; color: #f2efe6; font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; }
+  body { overflow: hidden; }
+  body.grid { overflow: auto; height: auto; min-height: 100%; }
+
+  #viewport { position: fixed; inset: 0; overflow: hidden; }
+  body.grid #viewport { position: static; overflow: visible; display: grid; grid-template-columns: repeat(var(--cols), calc(1920px * var(--k))); gap: 24px; justify-content: center; padding: 72px 24px 120px; }
+
+  .cell { position: absolute; left: calc((100% - 1920px * var(--k)) / 2); top: calc((100% - 1080px * var(--k)) / 2); width: calc(1920px * var(--k)); height: calc(1080px * var(--k)); overflow: hidden; background: #000; opacity: 0; visibility: hidden; transition: opacity .22s ease, visibility 0s linear .22s; }
+  .cell.active { opacity: 1; visibility: visible; transition: opacity .22s ease; }
+  .cell:focus { outline: none; }
+  .cell:focus-visible { outline: 3px solid var(--accent-on-dark); outline-offset: 3px; }
+  body.grid .cell { position: relative; left: auto; top: auto; opacity: 1; visibility: visible; cursor: pointer; border-radius: 6px; box-shadow: 0 0 0 1px #3b4038; transition: box-shadow .15s ease; }
+  body.grid .cell.active { box-shadow: 0 0 0 3px var(--accent); }
+  body.grid .cell:hover { box-shadow: 0 0 0 3px var(--accent-on-dark); }
+  body.grid .cell::after { content: attr(data-n); position: absolute; left: 8px; top: 8px; min-width: 28px; height: 28px; padding: 0 8px; border-radius: 14px; background: rgba(20, 22, 18, .85); color: #f2efe6; font: 600 13px/28px 'IBM Plex Mono', monospace; text-align: center; pointer-events: none; }
+
+  /* La diapositiva: lienzo fijo de 1920x1080 escalado con --k */
+  .cell > section { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; margin: 0; overflow: hidden; transform: scale(var(--k)); transform-origin: 0 0; -webkit-text-size-adjust: none; text-size-adjust: none; }
+  .cell section p, .cell section h1, .cell section h2, .cell section h3, .cell section ul, .cell section ol, .cell section li { margin: 0; }
+  .cell section table { border-collapse: collapse; border-spacing: 0; }
+  .cell section th { font-weight: 700; }
+  .cell section b { font-weight: 700; }
+
+  /* Controles */
+  #ui-progress { position: fixed; left: 0; top: 0; width: 100%; height: 4px; z-index: 20; pointer-events: none; }
+  #ui-progress i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .25s ease; }
+  body.grid #ui-progress { display: none; }
+  #ui-bar { position: fixed; left: 50%; bottom: max(16px, env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 30; display: flex; align-items: center; gap: 4px; padding: 5px 8px; background: rgba(20, 22, 18, .88); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border: 1px solid #3b4038; border-radius: 999px; font-size: 14px; transition: opacity .3s ease; }
+  body.idle #ui-bar { opacity: 0; pointer-events: none; }
+  body.idle { cursor: none; }
+  #ui-bar button, #ui-bar a { all: unset; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; min-width: 40px; height: 40px; padding: 0 10px; border-radius: 999px; color: #f2efe6; cursor: pointer; font: inherit; text-decoration: none; }
+  #ui-bar button:hover, #ui-bar a:hover { background: #2a2e28; }
+  #ui-bar button:focus-visible, #ui-bar a:focus-visible { outline: 2px solid var(--accent-on-dark); outline-offset: 1px; }
+  #ui-bar button[disabled] { opacity: .35; cursor: default; }
+  #ui-bar button[disabled]:hover { background: none; }
+  #ui-bar [hidden] { display: none; }
+  #ui-count { min-width: 74px; text-align: center; color: #c9c6ba; }
+  .sep { width: 1px; height: 22px; background: #3b4038; margin: 0 4px; }
+  body.grid .only-present { display: none; }
+  #ui-hint { display: none; position: fixed; left: 24px; top: 20px; z-index: 25; color: #c9c6ba; font-size: 14px; }
+  body.grid #ui-hint { display: block; }
+  #ui-rotate { display: none; position: fixed; left: 12px; right: 12px; top: 14px; z-index: 25; padding: 8px 12px; border-radius: 8px; background: rgba(20, 22, 18, .88); color: #f2efe6; font-size: 13px; text-align: center; pointer-events: none; }
+  @media (orientation: portrait) and (max-width: 700px) { body.present #ui-rotate { display: block; } }
+  @media (prefers-reduced-motion: reduce) { .cell, #ui-progress i, #ui-bar { transition: none; } }
+
+  @media print {
+    @page { size: 1920px 1080px; margin: 0; }
+    html, body { background: #fff !important; height: auto !important; overflow: visible !important; }
+    #viewport { position: static !important; display: block !important; padding: 0 !important; overflow: visible !important; }
+    .cell { position: relative !important; left: auto !important; top: auto !important; width: 1920px !important; height: 1080px !important; opacity: 1 !important; visibility: visible !important; box-shadow: none !important; border-radius: 0 !important; break-after: page; page-break-after: always; }
+    .cell:last-child { break-after: auto; page-break-after: auto; }
+    .cell::after { display: none !important; }
+    .cell > section { transform: none !important; }
+    #ui-bar, #ui-progress, #ui-hint, #ui-rotate { display: none !important; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+<noscript><style>
+  body { overflow: auto !important; } #viewport { position: static !important; }
+  .cell { position: relative !important; left: auto !important; top: auto !important; opacity: 1 !important; visibility: visible !important; margin-bottom: 24px; }
+</style></noscript>
+</head>
+<body class="present">
+<main id="viewport" aria-label="Presentación: Diseño de APIs — Presentación">
+<div class="cell active" data-slide="cover" data-n="1" tabindex="0" role="group" aria-roledescription="diapositiva" aria-label="1 de 24: Diseño de APIs">
+<section style="background:#1d201c;color:#f2efe6;font-family:'Source Serif 4',Georgia,serif;padding:128px 128px 160px;display:flex;flex-direction:column;justify-content:center;gap:36px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:#6fb1e0;line-height:1.3">Arquitectura de Software · Tema 2.4</p>
+<h1 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:200px;font-weight:700;line-height:1;color:#f2efe6">Diseño de APIs</h1>
+<p style="font-size:48px;line-height:1.4;color:#cfcabb;width:1400px">REST, principios de diseño de endpoints, versionado y documentación básica.</p>
+<div style="display:flex;gap:20px;padding:12px 0 0">
+<p style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:44px;font-weight:700;line-height:1;color:#6fb1e0;border:4px solid #6fb1e0;padding:14px 38px 16px;border-radius:50%">Recursos</p>
+<p style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:44px;font-weight:700;line-height:1;color:#e58444;border:4px solid #e58444;padding:14px 38px 16px;border-radius:50%">Versiones</p>
+<p style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:44px;font-weight:700;line-height:1;color:#8fc77a;border:4px solid #8fc77a;padding:14px 38px 16px;border-radius:50%">Contrato</p>
+</div>
+<p style="position:absolute;left:128px;bottom:56px;width:1600px;font-family:'IBM Plex Mono',monospace;font-size:24px;color:#9a9d8e">Laboratorio: Notas del semestre con API · api-notas-lab.vercel.app</p>
+</section>
+</div>
+<div class="cell" data-slide="hilo" data-n="2" tabindex="0" role="group" aria-roledescription="diapositiva" aria-label="2 de 24: Cinco paradas, poco más de una hora">
+<section style="background:#eae7de;color:#21241f;font-family:'Source Serif 4',Georgia,serif;padding:88px 128px 150px;display:flex;flex-direction:column;gap:30px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:#1f5f8b;line-height:1.3">El hilo de hoy</p>
+<h2 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:88px;font-weight:700;line-height:1.05;color:#21241f">Cinco paradas, poco más de una hora</h2>
+<div style="display:flex;gap:20px;align-items:stretch">
+<div style="flex:1;display:flex;flex-direction:column;justify-content:space-between;gap:12px;background:#fbfaf5;border-top:10px solid #1f5f8b;padding:26px 24px 30px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:40px;font-weight:600;line-height:1;color:#1f5f8b">1</p>
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:50px;font-weight:700;line-height:1.1;color:#21241f">Del navegador al cable</h3>
+<p style="font-size:28px;line-height:1.35;color:#3b3f38">De MVC en una pestaña a un servidor que sea dueño de los datos.</p>
+</div>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:600;color:#1f5f8b">13 min</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:space-between;gap:12px;background:#fbfaf5;border-top:10px solid #a84a14;padding:26px 24px 30px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:40px;font-weight:600;line-height:1;color:#a84a14">2</p>
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:50px;font-weight:700;line-height:1.1;color:#21241f">REST en pocas ideas</h3>
+<p style="font-size:28px;line-height:1.35;color:#3b3f38">Recursos, métodos y códigos de estado: el vocabulario común.</p>
+</div>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:600;color:#a84a14">20 min</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:space-between;gap:12px;background:#fbfaf5;border-top:10px solid #3a6330;padding:26px 24px 30px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:40px;font-weight:600;line-height:1;color:#3a6330">3</p>
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:50px;font-weight:700;line-height:1.1;color:#21241f">Respuestas que se entienden</h3>
+<p style="font-size:28px;line-height:1.35;color:#3b3f38">Errores legibles y listas grandes.</p>
+</div>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:600;color:#3a6330">5 min</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:space-between;gap:12px;background:#fbfaf5;border-top:10px solid #1f5f8b;padding:26px 24px 30px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:40px;font-weight:600;line-height:1;color:#1f5f8b">4</p>
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:50px;font-weight:700;line-height:1.1;color:#21241f">Cambiar sin romper</h3>
+<p style="font-size:28px;line-height:1.35;color:#3b3f38">Versionar, retirar con aviso y documentar con OpenAPI.</p>
+</div>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:600;color:#1f5f8b">13 min</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:space-between;gap:12px;background:#fbfaf5;border-top:10px solid #a84a14;padding:26px 24px 30px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:40px;font-weight:600;line-height:1;color:#a84a14">5</p>
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:50px;font-weight:700;line-height:1.1;color:#21241f">El caso completo</h3>
+<p style="font-size:28px;line-height:1.35;color:#3b3f38">MVC a los dos lados del cable y el laboratorio.</p>
+</div>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:600;color:#a84a14">14 min</p>
+</div>
+</div>
+<p style="font-size:34px;line-height:1.4;color:#21241f;width:1640px">Al final, el laboratorio: ustedes le ponen la API a la aplicación de notas.</p>
+<p style="position:absolute;left:128px;bottom:56px;width:1500px;font-family:'IBM Plex Mono',monospace;font-size:24px;color:#5c6158">Arquitectura de Software · Tema 2.4 · Diseño de APIs</p>
+</section>
+</div>
+<div class="cell" data-slide="pregunta" data-n="3" tabindex="0" role="group" aria-roledescription="diapositiva" aria-label="3 de 24: ¿Qué tiene que cambiar?">
+<section style="background:#1f5f8b;color:#fbfaf5;font-family:'Source Serif 4',Georgia,serif;padding:120px 128px 160px;display:flex;flex-direction:column;justify-content:center;gap:36px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:#cfe3f3;line-height:1.3">Para empezar</p>
+<p style="font-size:68px;line-height:1.25;color:#fbfaf5;width:1500px">Su aplicación de notas ya funciona. Ahora quieren usarla desde el celular y desde el portátil, con las mismas notas.</p>
+<h2 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:120px;font-weight:700;line-height:1.05;color:#fbfaf5">¿Qué tiene que cambiar?</h2>
+<p style="position:absolute;left:128px;bottom:56px;width:1500px;font-family:'IBM Plex Mono',monospace;font-size:24px;color:#cfe3f3">Hablen dos minutos con quien tengan al lado</p>
+</section>
+</div>
+<div class="cell" data-slide="donde" data-n="4" tabindex="0" role="group" aria-roledescription="diapositiva" aria-label="4 de 24: Dónde estábamos: MVC en una pestaña">
+<section style="background:#fbfaf5;color:#21241f;font-family:'Source Serif 4',Georgia,serif;padding:88px 128px 150px;display:flex;flex-direction:column;gap:28px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:#1f5f8b;line-height:1.3">Punto de partida</p>
+<h2 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:88px;font-weight:700;line-height:1.05;color:#21241f">Dónde estábamos: MVC en una pestaña</h2>
+<div style="display:flex;gap:36px;align-items:flex-start">
+<div style="position:relative;width:1010px;height:470px;flex:none">
+<div style="position:absolute;left:0px;top:0px;width:1010px;height:470px;background:#f1eee4;border:3px solid #dbd7c9;border-radius:16px"></div>
+<p style="position:absolute;left:28px;top:18px;width:600px;font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#5c6158">Navegador · una pestaña</p>
+<div style="position:absolute;left:300px;top:90px;width:260px;height:96px;background:#1f5f8b;border-radius:12px;display:flex;align-items:center;justify-content:center"><h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:54px;font-weight:700;line-height:1;color:#fbfaf5">Modelo</h3></div>
+<div style="position:absolute;left:720px;top:90px;width:260px;height:96px;background:#5c6158;border-radius:12px;display:flex;align-items:center;justify-content:center"><h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:46px;font-weight:700;line-height:1;color:#fbfaf5">localStorage</h3></div>
+<div style="position:absolute;left:50px;top:320px;width:260px;height:96px;background:#a84a14;border-radius:12px;display:flex;align-items:center;justify-content:center"><h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:54px;font-weight:700;line-height:1;color:#fbfaf5">Vista</h3></div>
+<div style="position:absolute;left:690px;top:320px;width:260px;height:96px;background:#3a6330;border-radius:12px;display:flex;align-items:center;justify-content:center"><h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:54px;font-weight:700;line-height:1;color:#fbfaf5">Controlador</h3></div>
+<svg aria-hidden="true" style="position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none"><line x1="560.0" y1="138.0" x2="702.4" y2="138.0" stroke="#1f5f8b" stroke-width="4" stroke-linecap="round"/><polygon points="720.0,138.0 698.0,146.4 698.0,129.6" fill="#1f5f8b"/></svg>
+<svg aria-hidden="true" style="position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none"><line x1="180.0" y1="320.0" x2="336.2" y2="196.9" stroke="#a84a14" stroke-width="4" stroke-linecap="round"/><polygon points="350.0,186.0 337.9,206.2 327.5,193.0" fill="#a84a14"/></svg>
+<svg aria-hidden="true" style="position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none"><line x1="790.0" y1="320.0" x2="535.8" y2="193.8" stroke="#3a6330" stroke-width="4" stroke-linecap="round"/><polygon points="520.0,186.0 543.4,188.3 536.0,203.3" fill="#3a6330"/></svg>
+<svg aria-hidden="true" style="position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none"><line x1="690.0" y1="368.0" x2="327.6" y2="368.0" stroke="#3a6330" stroke-width="4" stroke-linecap="round"/><polygon points="310.0,368.0 332.0,359.6 332.0,376.4" fill="#3a6330"/></svg>
+<p style="position:absolute;left:572px;top:96px;width:140px;font-size:26px;font-weight:600;text-align:center;color:#1f5f8b">guarda</p>
+<p style="position:absolute;left:100px;top:236px;width:110px;font-size:26px;font-weight:600;text-align:right;color:#a84a14">lee</p>
+<p style="position:absolute;left:712px;top:236px;width:160px;font-size:26px;font-weight:600;color:#3a6330">ordena</p>
+<p style="position:absolute;left:350px;top:378px;width:330px;font-size:26px;font-weight:600;text-align:center;color:#3a6330">ordena y escucha</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:18px">
+<div style="display:flex;flex-direction:column;gap:10px;background:#f1eee4;border-top:10px solid #3a6330;padding:26px 30px 32px">
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:46px;font-weight:700;line-height:1.1;color:#3a6330">Lo que funcionaba</h3>
+<p style="font-size:28px;line-height:1.35;color:inherit">Una persona, un navegador y sus datos en su equipo.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px;background:#f1eee4;border-top:10px solid #8f2b21;padding:26px 30px 32px">
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:46px;font-weight:700;line-height:1.1;color:#8f2b21">Lo que ya no alcanza</h3>
+<p style="font-size:28px;line-height:1.35;color:inherit">El celular no ve lo que guardó el portátil.</p>
+<p style="font-size:28px;line-height:1.35;color:inherit">Nadie más puede leer esas notas.</p>
+</div>
+</div>
+</div>
+<p style="font-size:34px;line-height:1.4;color:#21241f;width:1640px">Falta un dueño de la verdad: <b>un servidor</b>. Y un contrato para hablarle: <b>una API</b>.</p>
+<p style="position:absolute;left:128px;bottom:56px;width:1500px;font-family:'IBM Plex Mono',monospace;font-size:24px;color:#6b6f63">Arquitectura de Software · Tema 2.4 · Diseño de APIs</p>
+</section>
+</div>
+<div class="cell" data-slide="api" data-n="5" tabindex="0" role="group" aria-roledescription="diapositiva" aria-label="5 de 24: ¿Qué es una API?">
+<section style="background:#1d201c;color:#f2efe6;font-family:'Source Serif 4',Georgia,serif;padding:88px 128px 150px;display:flex;flex-direction:column;gap:30px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:#6fb1e0;line-height:1.3">Primer concepto</p>
+<h2 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:88px;font-weight:700;line-height:1.05;color:#f2efe6">¿Qué es una API?</h2>
+<p style="font-size:44px;line-height:1.3;color:#f2efe6;width:1500px">Un <b>contrato</b>: qué se puede pedir, con qué forma y qué se recibe a cambio. Quien la usa no ve lo que hay dentro.</p>
+<div style="display:flex;gap:24px;align-items:stretch">
+<div style="flex:1;display:flex;flex-direction:column;gap:10px;background:#262a24;border-top:10px solid #6fb1e0;padding:26px 30px 32px">
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:50px;font-weight:700;line-height:1.1;color:#6fb1e0">API en el mismo programa</h3>
+<p style="font-size:30px;line-height:1.35;color:#f2efe6">Llamas un método.</p>
+<p style="font-size:30px;line-height:1.35;color:#f2efe6">Mismo lenguaje, misma máquina.</p>
+<p style="font-size:30px;line-height:1.35;color:#f2efe6">No falla por culpa de una red.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:10px;background:#262a24;border-top:10px solid #e58444;padding:26px 30px 32px">
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:50px;font-weight:700;line-height:1.1;color:#e58444">API web</h3>
+<p style="font-size:30px;line-height:1.35;color:#f2efe6">Mandas una solicitud HTTP.</p>
+<p style="font-size:30px;line-height:1.35;color:#f2efe6">Otra máquina, quizá otro lenguaje.</p>
+<p style="font-size:30px;line-height:1.35;color:#f2efe6">Tarda, falla y puede cambiar sin avisarte.</p>
+</div>
+</div>
+<p style="font-size:34px;line-height:1.4;color:#f2efe6;width:1640px">El Modelo de la clase pasada ya era una API: <b>agregar, calificar, eliminar, resumen</b>. Hoy esa API cruza una red.</p>
+<p style="position:absolute;left:128px;bottom:56px;width:1500px;font-family:'IBM Plex Mono',monospace;font-size:24px;color:#9a9d8e">Arquitectura de Software · Tema 2.4 · Diseño de APIs</p>
+</section>
+</div>
+<div class="cell" data-slide="tentacion" data-n="6" tabindex="0" role="group" aria-roledescription="diapositiva" aria-label="6 de 24: Guardar todo, cada vez">
+<section style="background:#eae7de;color:#21241f;font-family:'Source Serif 4',Georgia,serif;padding:88px 128px 150px;display:flex;flex-direction:column;gap:24px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:#1f5f8b;line-height:1.3">La tentación</p>
+<h2 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:88px;font-weight:700;line-height:1.05;color:#21241f">Guardar todo, cada vez</h2>
+<div style="display:flex;gap:28px;align-items:flex-start">
+<div style="width:880px;display:flex;flex-direction:column;gap:16px">
+<div style="width:880px;display:flex;flex-direction:column;gap:0;background:#1d201c;border-top:10px solid #e5877a;border-radius:0 0 12px 12px;padding:22px 26px 28px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#e5877a;padding:0 0 12px">La API más fácil de escribir</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#e5877a;white-space:nowrap">PUT /guardarTodo</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">[ { "id": 1, "nombre": "Parcial 1", … },</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">&#160;&#160;{ "id": 2, "nombre": "Taller", … } ]</p>
+</div>
+<div style="width:880px;display:flex;flex-direction:column;gap:0;background:#1d201c;border-top:10px solid #e0b45a;border-radius:0 0 12px 12px;padding:22px 26px 28px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#e0b45a;padding:0 0 12px">Así se pierde una nota</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">portátil&#160;&#160;lee la lista .......... [Parcial, Taller]</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">celular&#160;&#160;&#160;lee la lista .......... [Parcial, Taller]</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">portátil&#160;&#160;califica y guarda ..... Taller = 5</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#e0b45a;white-space:nowrap">celular&#160;&#160;&#160;guarda SU lista ....... Taller = —&#160;&#160;(pisa)</p>
+</div>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;flex-direction:column;gap:10px;background:#fbfaf5;border-top:10px solid #8f2b21;padding:26px 30px 32px">
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:44px;font-weight:700;line-height:1.1;color:#8f2b21">Se pisan</h3>
+<p style="font-size:27px;line-height:1.35;color:inherit">Dos aparatos guardan su propia lista: gana el último y el otro pierde su trabajo sin enterarse.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px;background:#fbfaf5;border-top:10px solid #8f2b21;padding:26px 30px 32px">
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:44px;font-weight:700;line-height:1.1;color:#8f2b21">Las reglas se escapan</h3>
+<p style="font-size:27px;line-height:1.35;color:inherit">Quien use curl se salta cualquier validación del navegador: el servidor guarda lo que le manden.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px;background:#fbfaf5;border-top:10px solid #8f2b21;padding:26px 30px 32px">
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:44px;font-weight:700;line-height:1.1;color:#8f2b21">No hay recursos</h3>
+<p style="font-size:27px;line-height:1.35;color:inherit">Un solo cajón: no se puede leer, cambiar o borrar una evaluación, ni darle una dirección.</p>
+</div>
+</div>
+</div>
+<p style="font-size:30px;line-height:1.4;color:#3b3f38;width:1640px">Es lo más fácil de programar y lo primero que se rompe. Lo van a criticar en el laboratorio.</p>
+<p style="position:absolute;left:128px;bottom:56px;width:1500px;font-family:'IBM Plex Mono',monospace;font-size:24px;color:#5c6158">Arquitectura de Software · Tema 2.4 · Diseño de APIs</p>
+</section>
+</div>
+<div class="cell" data-slide="rest" data-n="7" tabindex="0" role="group" aria-roledescription="diapositiva" aria-label="7 de 24: Un estilo de arquitectura, no un protocolo">
+<section style="background:#fbfaf5;color:#21241f;font-family:'Source Serif 4',Georgia,serif;padding:88px 128px 150px;display:flex;flex-direction:column;gap:26px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:#1f5f8b;line-height:1.3">REST</p>
+<h2 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:88px;font-weight:700;line-height:1.05;color:#21241f">Un estilo de arquitectura, no un protocolo</h2>
+<p style="font-size:30px;line-height:1.4;color:#3b3f38;width:1640px">Roy Fielding, tesis doctoral, 2000. REST <b>no es</b> «JSON sobre HTTP»: es un conjunto de restricciones que, juntas, dan una API que escala y evoluciona.</p>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px">
+<div style="display:flex;flex-direction:column;gap:10px;background:#f1eee4;border-top:10px solid #1f5f8b;padding:26px 30px 32px">
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:46px;font-weight:700;line-height:1.1;color:#1f5f8b">Cliente–servidor</h3>
+<p style="font-size:28px;line-height:1.35;color:inherit">El navegador y el servidor cambian por separado; solo comparten el contrato.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px;background:#f1eee4;border-top:10px solid #a84a14;padding:26px 30px 32px">
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:46px;font-weight:700;line-height:1.1;color:#a84a14">Sin estado</h3>
+<p style="font-size:28px;line-height:1.35;color:inherit">Cada solicitud trae todo lo necesario. El servidor no recuerda «la sesión».</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px;background:#f1eee4;border-top:10px solid #3a6330;padding:26px 30px 32px">
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:46px;font-weight:700;line-height:1.1;color:#3a6330">Caché</h3>
+<p style="font-size:28px;line-height:1.35;color:inherit">Las respuestas dicen si se pueden reutilizar (ETag, 304 Not Modified).</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px;background:#f1eee4;border-top:10px solid #1f5f8b;padding:26px 30px 32px">
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:46px;font-weight:700;line-height:1.1;color:#1f5f8b">Interfaz uniforme</h3>
+<p style="font-size:28px;line-height:1.35;color:inherit">Recursos con dirección, métodos con significado y mensajes que se explican solos.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px;background:#f1eee4;border-top:10px solid #a84a14;padding:26px 30px 32px">
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:46px;font-weight:700;line-height:1.1;color:#a84a14">Por capas</h3>
+<p style="font-size:28px;line-height:1.35;color:inherit">El cliente no sabe si habla con el servidor o con un proxy o un balanceador.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px;background:#f1eee4;border-top:10px solid #3a6330;padding:26px 30px 32px">
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:46px;font-weight:700;line-height:1.1;color:#3a6330">Código bajo demanda</h3>
+<p style="font-size:28px;line-height:1.35;color:inherit">Opcional: el servidor puede enviar código al cliente (como el JavaScript de la página).</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:56px;width:1600px;font-family:'IBM Plex Mono',monospace;font-size:24px;color:#6b6f63">Arquitectura de Software · Tema 2.4 · Fielding (2000), capítulo 5</p>
+</section>
+</div>
+<div class="cell" data-slide="recursos" data-n="8" tabindex="0" role="group" aria-roledescription="diapositiva" aria-label="8 de 24: Recursos, no acciones">
+<section style="background:#1d201c;color:#f2efe6;font-family:'Source Serif 4',Georgia,serif;padding:88px 128px 150px;display:flex;flex-direction:column;gap:28px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:#6fb1e0;line-height:1.3">Primera decisión de diseño</p>
+<h2 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:88px;font-weight:700;line-height:1.05;color:#f2efe6">Recursos, no acciones</h2>
+<div style="display:flex;gap:28px;align-items:flex-start">
+<div style="width:830px;display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;flex-direction:column;gap:10px;background:#262a24;border-top:10px solid #6fb1e0;padding:26px 30px 32px">
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:48px;font-weight:700;line-height:1.1;color:#6fb1e0">/v1/evaluaciones</h3>
+<p style="font-size:28px;line-height:1.35;color:#f2efe6">La colección: se lista y se agrega.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px;background:#262a24;border-top:10px solid #e58444;padding:26px 30px 32px">
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:48px;font-weight:700;line-height:1.1;color:#e58444">/v1/evaluaciones/{id}</h3>
+<p style="font-size:28px;line-height:1.35;color:#f2efe6">Un elemento: se lee, se modifica y se borra.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px;background:#262a24;border-top:10px solid #8fc77a;padding:26px 30px 32px">
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:48px;font-weight:700;line-height:1.1;color:#8fc77a">/v1/resumen</h3>
+<p style="font-size:28px;line-height:1.35;color:#f2efe6">Un recurso calculado: no es una fila de datos, pero tiene dirección.</p>
+</div>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:18px">
+<div style="flex:1;display:flex;flex-direction:column;gap:0;background:#1d201c;border-top:10px solid #6fb1e0;border-radius:0 0 12px 12px;padding:22px 26px 28px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#6fb1e0;padding:0 0 12px">Una representación</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">GET /v1/evaluaciones/1</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">&#160;</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">{ "id": 1,</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">&#160;&#160;"nombre": "Parcial 1",</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">&#160;&#160;"peso": 30,</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">&#160;&#160;"nota": 4 }</p>
+</div>
+<p style="font-size:28px;line-height:1.4;color:#d9d6ca;width:760px">El recurso es el <b>concepto</b>; la representación es una foto de su estado, en un formato. No es el objeto interno del Modelo: es un contrato.</p>
+</div>
+</div>
+<p style="font-size:38px;line-height:1.4;color:#f2efe6;width:1640px">La dirección <b>nombra</b>. El método <b>actúa</b>.</p>
+<p style="position:absolute;left:128px;bottom:56px;width:1500px;font-family:'IBM Plex Mono',monospace;font-size:24px;color:#9a9d8e">Arquitectura de Software · Tema 2.4 · Diseño de APIs</p>
+</section>
+</div>
+<div class="cell" data-slide="endpoints" data-n="9" tabindex="0" role="group" aria-roledescription="diapositiva" aria-label="9 de 24: Siete reglas, del mal al bien">
+<section style="background:#fbfaf5;color:#21241f;font-family:'Source Serif 4',Georgia,serif;padding:88px 128px 150px;display:flex;flex-direction:column;gap:24px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:#1f5f8b;line-height:1.3">Principios de diseño de endpoints</p>
+<h2 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:88px;font-weight:700;line-height:1.05;color:#21241f">Siete reglas, del mal al bien</h2>
+<table style="width:1664px;font-size:30px;color:#21241f;background:#fbfaf5">
+<tr><th style="width:33%;text-align:left;padding:13px 20px;color:#5c6158">Regla</th><th style="width:30%;text-align:left;padding:13px 20px;color:#5c6158">Mal</th><th style="width:37%;text-align:left;padding:13px 20px;color:#5c6158">Bien</th></tr>
+<tr><td style="text-align:left;padding:13px 20px">La dirección es un sustantivo</td><td style="text-align:left;padding:13px 20px;font-family:'IBM Plex Mono',monospace;font-size:28px">POST /crearEvaluacion</td><td style="text-align:left;padding:13px 20px;font-family:'IBM Plex Mono',monospace;font-size:28px">POST /v1/evaluaciones</td></tr>
+<tr style="background:#f1eee4"><td style="text-align:left;padding:13px 20px">Plural y jerarquía</td><td style="text-align:left;padding:13px 20px;font-family:'IBM Plex Mono',monospace;font-size:28px">GET /evaluacion/3</td><td style="text-align:left;padding:13px 20px;font-family:'IBM Plex Mono',monospace;font-size:28px">GET /v1/evaluaciones/3</td></tr>
+<tr><td style="text-align:left;padding:13px 20px">Minúsculas, sin «/» final ni extensión</td><td style="text-align:left;padding:13px 20px;font-family:'IBM Plex Mono',monospace;font-size:28px">GET /v1/Evaluaciones/</td><td style="text-align:left;padding:13px 20px;font-family:'IBM Plex Mono',monospace;font-size:28px">GET /v1/evaluaciones</td></tr>
+<tr style="background:#f1eee4"><td style="text-align:left;padding:13px 20px">Filtrar va en la consulta</td><td style="text-align:left;padding:13px 20px;font-family:'IBM Plex Mono',monospace;font-size:28px">GET /evaluaciones/pendientes</td><td style="text-align:left;padding:13px 20px;font-family:'IBM Plex Mono',monospace;font-size:28px">GET /v2/evaluaciones?estado=pendiente</td></tr>
+<tr><td style="text-align:left;padding:13px 20px">El método es la acción</td><td style="text-align:left;padding:13px 20px;font-family:'IBM Plex Mono',monospace;font-size:28px">GET /eliminar?id=3</td><td style="text-align:left;padding:13px 20px;font-family:'IBM Plex Mono',monospace;font-size:28px">DELETE /v1/evaluaciones/3</td></tr>
+<tr style="background:#f1eee4"><td style="text-align:left;padding:13px 20px">El estado dice el resultado</td><td style="text-align:left;padding:13px 20px;font-family:'IBM Plex Mono',monospace;font-size:28px">200 { "ok": false }</td><td style="text-align:left;padding:13px 20px;font-family:'IBM Plex Mono',monospace;font-size:28px">422 + un problema</td></tr>
+<tr><td style="text-align:left;padding:13px 20px">La versión va en la dirección</td><td style="text-align:left;padding:13px 20px;font-family:'IBM Plex Mono',monospace;font-size:28px">GET /evaluaciones</td><td style="text-align:left;padding:13px 20px;font-family:'IBM Plex Mono',monospace;font-size:28px">GET /v1/evaluaciones</td></tr>
+</table>
+<p style="position:absolute;left:128px;bottom:56px;width:1500px;font-family:'IBM Plex Mono',monospace;font-size:24px;color:#6b6f63">Arquitectura de Software · Tema 2.4 · Diseño de APIs</p>
+</section>
+</div>
+<div class="cell" data-slide="metodos" data-n="10" tabindex="0" role="group" aria-roledescription="diapositiva" aria-label="10 de 24: Seguros e idempotentes">
+<section style="background:#eae7de;color:#21241f;font-family:'Source Serif 4',Georgia,serif;padding:88px 128px 150px;display:flex;flex-direction:column;gap:24px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:#1f5f8b;line-height:1.3">Los verbos de HTTP</p>
+<h2 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:88px;font-weight:700;line-height:1.05;color:#21241f">Seguros e idempotentes</h2>
+<table style="width:1664px;font-size:28px;color:#21241f;background:#fbfaf5">
+<tr><th style="width:14%;text-align:left;padding:11px 20px;color:#5c6158">Método</th><th style="width:14%;text-align:left;padding:11px 20px;color:#5c6158">¿Seguro?</th><th style="width:20%;text-align:left;padding:11px 20px;color:#5c6158">¿Idempotente?</th><th style="width:52%;text-align:left;padding:11px 20px;color:#5c6158">En Notas</th></tr>
+<tr><td style="text-align:left;padding:11px 20px;font-family:'IBM Plex Mono',monospace;font-size:26px">GET</td><td style="text-align:left;padding:11px 20px">Sí</td><td style="text-align:left;padding:11px 20px">Sí</td><td style="text-align:left;padding:11px 20px">Leer la lista, una evaluación o el resumen</td></tr>
+<tr style="background:#f1eee4"><td style="text-align:left;padding:11px 20px;font-family:'IBM Plex Mono',monospace;font-size:26px">POST</td><td style="text-align:left;padding:11px 20px">No</td><td style="text-align:left;padding:11px 20px">No</td><td style="text-align:left;padding:11px 20px">Crear: el servidor decide el id y la dirección</td></tr>
+<tr><td style="text-align:left;padding:11px 20px;font-family:'IBM Plex Mono',monospace;font-size:26px">PUT</td><td style="text-align:left;padding:11px 20px">No</td><td style="text-align:left;padding:11px 20px">Sí</td><td style="text-align:left;padding:11px 20px">Reemplazar una evaluación completa (no lo usamos)</td></tr>
+<tr style="background:#f1eee4"><td style="text-align:left;padding:11px 20px;font-family:'IBM Plex Mono',monospace;font-size:26px">PATCH</td><td style="text-align:left;padding:11px 20px">No</td><td style="text-align:left;padding:11px 20px">Depende</td><td style="text-align:left;padding:11px 20px">Cambiar solo la nota de una evaluación</td></tr>
+<tr><td style="text-align:left;padding:11px 20px;font-family:'IBM Plex Mono',monospace;font-size:26px">DELETE</td><td style="text-align:left;padding:11px 20px">No</td><td style="text-align:left;padding:11px 20px">Sí</td><td style="text-align:left;padding:11px 20px">Borrar una evaluación</td></tr>
+</table>
+<p style="font-size:30px;line-height:1.4;color:#3b3f38;width:1640px"><b>Seguro</b>: no cambia nada. <b>Idempotente</b>: repetirlo deja al servidor en el mismo estado que hacerlo una vez, aunque la respuesta cambie.</p>
+<div style="display:flex;gap:14px;align-items:stretch">
+<div style="flex:1;background:#fbfaf5;border:2px solid #dbd7c9;border-radius:10px;padding:12px 18px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;color:#5c6158">Nivel 0</p>
+<p style="font-size:28px;line-height:1.25;color:#21241f">un solo endpoint</p>
+</div>
+<div style="flex:1;background:#fbfaf5;border:2px solid #dbd7c9;border-radius:10px;padding:12px 18px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;color:#5c6158">Nivel 1</p>
+<p style="font-size:28px;line-height:1.25;color:#21241f">recursos</p>
+</div>
+<div style="flex:1;background:#1f5f8b;border:2px solid #1f5f8b;border-radius:10px;padding:12px 18px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;color:#cfe3f3">Nivel 2 · aquí llegamos</p>
+<p style="font-size:28px;line-height:1.25;color:#fbfaf5">métodos y estados</p>
+</div>
+<div style="flex:1;background:#fbfaf5;border:2px solid #dbd7c9;border-radius:10px;padding:12px 18px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;color:#5c6158">Nivel 3</p>
+<p style="font-size:28px;line-height:1.25;color:#21241f">hipermedia</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:56px;width:1600px;font-family:'IBM Plex Mono',monospace;font-size:24px;color:#5c6158">Arquitectura de Software · Tema 2.4 · Niveles de Richardson según Fowler</p>
+</section>
+</div>
+<div class="cell" data-slide="estados" data-n="11" tabindex="0" role="group" aria-roledescription="diapositiva" aria-label="11 de 24: Códigos de estado que sí vas a usar">
+<section style="background:#fbfaf5;color:#21241f;font-family:'Source Serif 4',Georgia,serif;padding:88px 128px 150px;display:flex;flex-direction:column;gap:24px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:#1f5f8b;line-height:1.3">Lo que responde el servidor</p>
+<h2 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:88px;font-weight:700;line-height:1.05;color:#21241f">Códigos de estado que sí vas a usar</h2>
+<table style="width:1664px;font-size:26px;color:#21241f;background:#fbfaf5">
+<tr><th style="width:36%;text-align:left;padding:5px 20px;color:#5c6158">Estado</th><th style="width:64%;text-align:left;padding:5px 20px;color:#5c6158">Qué dice</th></tr>
+<tr style="background:#e1efdc"><td style="text-align:left;padding:5px 20px;font-family:'IBM Plex Mono',monospace;font-size:24px">200 OK</td><td style="text-align:left;padding:5px 20px">Salió bien; hay cuerpo.</td></tr>
+<tr style="background:#e1efdc"><td style="text-align:left;padding:5px 20px;font-family:'IBM Plex Mono',monospace;font-size:24px">201 Created</td><td style="text-align:left;padding:5px 20px">Se creó algo; Location dice dónde vive.</td></tr>
+<tr style="background:#e1efdc"><td style="text-align:left;padding:5px 20px;font-family:'IBM Plex Mono',monospace;font-size:24px">204 No Content</td><td style="text-align:left;padding:5px 20px">Salió bien; no hay nada que devolver.</td></tr>
+<tr style="background:#dbe8f2"><td style="text-align:left;padding:5px 20px;font-family:'IBM Plex Mono',monospace;font-size:24px">304 Not Modified</td><td style="text-align:left;padding:5px 20px">No cambió desde la versión que ya tienes.</td></tr>
+<tr style="background:#f6e8c8"><td style="text-align:left;padding:5px 20px;font-family:'IBM Plex Mono',monospace;font-size:24px">400 Bad Request</td><td style="text-align:left;padding:5px 20px">No se entiende la solicitud.</td></tr>
+<tr style="background:#f6e8c8"><td style="text-align:left;padding:5px 20px;font-family:'IBM Plex Mono',monospace;font-size:24px">404 Not Found</td><td style="text-align:left;padding:5px 20px">Ese recurso no existe.</td></tr>
+<tr style="background:#f6e8c8"><td style="text-align:left;padding:5px 20px;font-family:'IBM Plex Mono',monospace;font-size:24px">405 Method Not Allowed</td><td style="text-align:left;padding:5px 20px">Ese método no va en esa dirección; Allow dice cuáles sí.</td></tr>
+<tr style="background:#f6e8c8"><td style="text-align:left;padding:5px 20px;font-family:'IBM Plex Mono',monospace;font-size:24px">409 Conflict</td><td style="text-align:left;padding:5px 20px">Choca con el estado actual de los datos.</td></tr>
+<tr style="background:#f6e8c8"><td style="text-align:left;padding:5px 20px;font-family:'IBM Plex Mono',monospace;font-size:24px">415 Unsupported Media Type</td><td style="text-align:left;padding:5px 20px">El formato del cuerpo no es el esperado.</td></tr>
+<tr style="background:#f6e8c8"><td style="text-align:left;padding:5px 20px;font-family:'IBM Plex Mono',monospace;font-size:24px">422 Unprocessable Content</td><td style="text-align:left;padding:5px 20px">Se entiende, pero un valor incumple una regla.</td></tr>
+<tr style="background:#f6dad6"><td style="text-align:left;padding:5px 20px;font-family:'IBM Plex Mono',monospace;font-size:24px">500 Internal Server Error</td><td style="text-align:left;padding:5px 20px">Falló el servidor; nunca con trazas ni detalles internos.</td></tr>
+</table>
+<p style="font-size:28px;line-height:1.4;color:#3b3f38;width:1640px"><b>2xx</b> salió bien · <b>3xx</b> ya lo tienes · <b>4xx</b> el cliente se equivocó · <b>5xx</b> falló el servidor</p>
+<p style="position:absolute;left:128px;bottom:56px;width:1600px;font-family:'IBM Plex Mono',monospace;font-size:24px;color:#6b6f63">Arquitectura de Software · Tema 2.4 · nombres según RFC 9110</p>
+</section>
+</div>
+<div class="cell" data-slide="votacion" data-n="12" tabindex="0" role="group" aria-roledescription="diapositiva" aria-label="12 de 24: ¿Qué estado devuelve?">
+<section style="background:#1d201c;color:#f2efe6;font-family:'Source Serif 4',Georgia,serif;padding:88px 128px 150px;display:flex;flex-direction:column;gap:28px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:#6fb1e0;line-height:1.3">Votación · 4 minutos</p>
+<h2 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:88px;font-weight:700;line-height:1.05;color:#f2efe6">¿Qué estado devuelve?</h2>
+<ol style="font-size:38px;line-height:1.5;color:#f2efe6;padding:0 0 0 52px">
+<li>Mandan un JSON al que le falta cerrar una llave</li>
+<li>Piden GET /v1/usuarios/999 y no existe</li>
+<li>Registran un correo que ya tiene una cuenta</li>
+<li>Escriben el correo «ana@@casa» (formato inválido)</li>
+<li>Mandan el cuerpo como text/plain a un endpoint que solo lee JSON</li>
+<li>Piden DELETE /v1/usuarios (la colección entera) y esa operación no existe</li>
+<li>Ponen la edad −5 en una solicitud que el servidor entiende</li>
+</ol>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:30px;font-weight:500;color:#6fb1e0;line-height:1.3">Voten para cada una: 400 · 404 · 405 · 409 · 415 · 422</p>
+<p style="position:absolute;left:128px;bottom:56px;width:1500px;font-family:'IBM Plex Mono',monospace;font-size:24px;color:#9a9d8e">Arquitectura de Software · Tema 2.4 · Diseño de APIs</p>
+</section>
+</div>
+<div class="cell" data-slide="respuestas" data-n="13" tabindex="0" role="group" aria-roledescription="diapositiva" aria-label="13 de 24: Éxito y error, los dos con forma">
+<section style="background:#fbfaf5;color:#21241f;font-family:'Source Serif 4',Georgia,serif;padding:88px 128px 150px;display:flex;flex-direction:column;gap:26px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:#1f5f8b;line-height:1.3">Una respuesta bien hecha</p>
+<h2 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:88px;font-weight:700;line-height:1.05;color:#21241f">Éxito y error, los dos con forma</h2>
+<div style="display:flex;gap:24px;align-items:flex-start">
+<div style="width:820px;display:flex;flex-direction:column;gap:0;background:#1d201c;border-top:10px solid #8fc77a;border-radius:0 0 12px 12px;padding:22px 26px 28px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8fc77a;padding:0 0 12px">Éxito · 201 Created</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">POST /v1/evaluaciones</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">{ "nombre": "Final", "peso": 30 }</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">&#160;</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#8fc77a;white-space:nowrap">201 Created</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">Location: /v1/evaluaciones/3</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">Content-Type: application/json</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">&#160;</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">{ "id": 3, "nombre": "Final",</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">&#160;&#160;"peso": 30, "nota": null }</p>
+</div>
+<div style="width:820px;display:flex;flex-direction:column;gap:0;background:#1d201c;border-top:10px solid #e5877a;border-radius:0 0 12px 12px;padding:22px 26px 28px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#e5877a;padding:0 0 12px">Error · application/problem+json</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">GET /v1/evaluaciones/99</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">&#160;</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#e5877a;white-space:nowrap">404 Not Found</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">Content-Type: application/problem+json</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">&#160;</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">{ "type": "…/problemas/no-existe",</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">&#160;&#160;"title": "La evaluación no existe",</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">&#160;&#160;"status": 404,</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">&#160;&#160;"detail": "No existe la evaluación.",</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">&#160;&#160;"instance": "/v1/evaluaciones/99" }</p>
+</div>
+</div>
+<p style="font-size:28px;line-height:1.4;color:#3b3f38;width:1640px"><b>type</b> qué problema es (identificador estable) · <b>title</b> resumen, igual siempre · <b>status</b> el estado · <b>detail</b> este caso, para personas · <b>instance</b> qué solicitud lo causó</p>
+<p style="position:absolute;left:128px;bottom:56px;width:1600px;font-family:'IBM Plex Mono',monospace;font-size:24px;color:#6b6f63">Arquitectura de Software · Tema 2.4 · RFC 9457: Problem Details for HTTP APIs</p>
+</section>
+</div>
+<div class="cell" data-slide="listas" data-n="14" tabindex="0" role="group" aria-roledescription="diapositiva" aria-label="14 de 24: Listas: paginar, filtrar, ordenar">
+<section style="background:#eae7de;color:#21241f;font-family:'Source Serif 4',Georgia,serif;padding:88px 128px 150px;display:flex;flex-direction:column;gap:28px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:#1f5f8b;line-height:1.3">Colecciones grandes</p>
+<h2 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:88px;font-weight:700;line-height:1.05;color:#21241f">Listas: paginar, filtrar, ordenar</h2>
+<div style="display:flex;gap:26px;align-items:flex-start">
+<div style="width:960px;display:flex;flex-direction:column;gap:0;background:#1d201c;border-top:10px solid #6fb1e0;border-radius:0 0 12px 12px;padding:22px 26px 28px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#6fb1e0;padding:0 0 12px">Una página de la lista</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">GET /v2/evaluaciones?estado=pendiente</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">&#160;&#160;&#160;&#160;&#160;&#160;&amp;orden=-peso&amp;porPagina=2&amp;pagina=2</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">&#160;</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#8fc77a;white-space:nowrap">200 OK</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">Link: &lt;/v2/evaluaciones?…&amp;pagina=1&gt;; rel="prev",</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">&#160;&#160;&#160;&#160;&#160;&#160;&lt;/v2/evaluaciones?…&amp;pagina=3&gt;; rel="next"</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">&#160;</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">{ "datos": [ … ],</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">&#160;&#160;"paginacion": { "pagina": 2, "porPagina": 2,</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;"total": 5, "totalPaginas": 3 } }</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;flex-direction:column;gap:10px;background:#fbfaf5;border-top:10px solid #1f5f8b;padding:26px 30px 32px">
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:42px;font-weight:700;line-height:1.1;color:#1f5f8b">Paginar</h3>
+<p style="font-size:26px;line-height:1.35;color:inherit">Nunca devuelvas una lista sin tope: con diez mil filas sufren el servidor y el cliente.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px;background:#fbfaf5;border-top:10px solid #a84a14;padding:26px 30px 32px">
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:42px;font-weight:700;line-height:1.1;color:#a84a14">Filtrar y ordenar</h3>
+<p style="font-size:26px;line-height:1.35;color:inherit">Van en la consulta, no en la ruta. Un valor inválido es un 400.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px;background:#fbfaf5;border-top:10px solid #3a6330;padding:26px 30px 32px">
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:42px;font-weight:700;line-height:1.1;color:#3a6330">Navegar</h3>
+<p style="font-size:26px;line-height:1.35;color:inherit">La respuesta dice dónde está lo siguiente: cabecera Link (RFC 8288).</p>
+</div>
+</div>
+</div>
+<p style="font-size:32px;line-height:1.4;color:#3b3f38;width:1640px">Y un arreglo pelado no tiene dónde decir «total». Eso va a importar enseguida.</p>
+<p style="position:absolute;left:128px;bottom:56px;width:1500px;font-family:'IBM Plex Mono',monospace;font-size:24px;color:#5c6158">Arquitectura de Software · Tema 2.4 · Diseño de APIs</p>
+</section>
+</div>
+<div class="cell" data-slide="versionar" data-n="15" tabindex="0" role="group" aria-roledescription="diapositiva" aria-label="15 de 24: Una API publicada es una promesa">
+<section style="background:#1d201c;color:#f2efe6;font-family:'Source Serif 4',Georgia,serif;padding:88px 128px 150px;display:flex;flex-direction:column;gap:28px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:#6fb1e0;line-height:1.3">Cambiar sin romper</p>
+<h2 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:88px;font-weight:700;line-height:1.05;color:#f2efe6">Una API publicada es una promesa</h2>
+<div style="display:flex;gap:24px;align-items:stretch">
+<div style="flex:1;display:flex;flex-direction:column;gap:10px;background:#262a24;border-top:10px solid #8fc77a;padding:26px 30px 32px">
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:52px;font-weight:700;line-height:1.1;color:#8fc77a">No rompe a nadie</h3>
+<p style="font-size:30px;line-height:1.35;color:#f2efe6">Agregar un campo opcional a una respuesta</p>
+<p style="font-size:30px;line-height:1.35;color:#f2efe6">Agregar un endpoint nuevo</p>
+<p style="font-size:30px;line-height:1.35;color:#f2efe6">Aceptar un valor más en una entrada</p>
+<p style="font-size:30px;line-height:1.35;color:#f2efe6">Hacer opcional lo que era obligatorio</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:10px;background:#262a24;border-top:10px solid #e5877a;padding:26px 30px 32px">
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:52px;font-weight:700;line-height:1.1;color:#e5877a">Rompe a los clientes</h3>
+<p style="font-size:30px;line-height:1.35;color:#f2efe6">Quitar o renombrar un campo</p>
+<p style="font-size:30px;line-height:1.35;color:#f2efe6">Cambiar su tipo («4.2» en vez de 4.2)</p>
+<p style="font-size:30px;line-height:1.35;color:#f2efe6">Cambiar la forma: de arreglo a objeto</p>
+<p style="font-size:30px;line-height:1.35;color:#f2efe6">Exigir un campo nuevo en la entrada</p>
+<p style="font-size:30px;line-height:1.35;color:#f2efe6">Cambiar el significado de un valor</p>
+</div>
+</div>
+<p style="font-size:36px;line-height:1.4;color:#f2efe6;width:1640px">La lista de la v1 es un arreglo. Paginarla la volvería un objeto: <b>eso rompe</b>. Hace falta una versión nueva.</p>
+<p style="position:absolute;left:128px;bottom:56px;width:1500px;font-family:'IBM Plex Mono',monospace;font-size:24px;color:#9a9d8e">Arquitectura de Software · Tema 2.4 · Diseño de APIs</p>
+</section>
+</div>
+<div class="cell" data-slide="estrategias" data-n="16" tabindex="0" role="group" aria-roledescription="diapositiva" aria-label="16 de 24: Cuatro maneras de versionar">
+<section style="background:#fbfaf5;color:#21241f;font-family:'Source Serif 4',Georgia,serif;padding:88px 128px 150px;display:flex;flex-direction:column;gap:26px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:#1f5f8b;line-height:1.3">Dónde va la versión</p>
+<h2 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:88px;font-weight:700;line-height:1.05;color:#21241f">Cuatro maneras de versionar</h2>
+<table style="width:1664px;font-size:28px;color:#21241f;background:#fbfaf5">
+<tr><th style="width:15%;text-align:left;padding:13px 18px;color:#5c6158">Estrategia</th><th style="width:27%;text-align:left;padding:13px 18px;color:#5c6158">Ejemplo</th><th style="width:30%;text-align:left;padding:13px 18px;color:#5c6158">A favor</th><th style="width:28%;text-align:left;padding:13px 18px;color:#5c6158">En contra</th></tr>
+<tr><td style="text-align:left;padding:13px 18px">En la dirección</td><td style="text-align:left;padding:13px 18px;font-family:'IBM Plex Mono',monospace;font-size:26px">GET /v2/evaluaciones</td><td style="text-align:left;padding:13px 18px">Se ve, se prueba en el navegador y con curl, se enruta fácil</td><td style="text-align:left;padding:13px 18px">La misma «cosa» tiene dos direcciones</td></tr>
+<tr style="background:#f1eee4"><td style="text-align:left;padding:13px 18px">Cabecera propia</td><td style="text-align:left;padding:13px 18px;font-family:'IBM Plex Mono',monospace;font-size:26px">Api-Version: 2</td><td style="text-align:left;padding:13px 18px">La dirección no cambia</td><td style="text-align:left;padding:13px 18px">Invisible: no se prueba pegando un enlace</td></tr>
+<tr><td style="text-align:left;padding:13px 18px">Tipo de medio</td><td style="text-align:left;padding:13px 18px;font-family:'IBM Plex Mono',monospace;font-size:26px">Accept: application/vnd.notas.v2+json</td><td style="text-align:left;padding:13px 18px">Versiona la representación, no el recurso</td><td style="text-align:left;padding:13px 18px">Más difícil de usar, documentar y cachear</td></tr>
+<tr style="background:#f1eee4"><td style="text-align:left;padding:13px 18px">Parámetro</td><td style="text-align:left;padding:13px 18px;font-family:'IBM Plex Mono',monospace;font-size:26px">GET /evaluaciones?version=2</td><td style="text-align:left;padding:13px 18px">Fácil de agregar</td><td style="text-align:left;padding:13px 18px">Se mezcla con los filtros; es fácil olvidarlo</td></tr>
+</table>
+<p style="font-size:32px;line-height:1.4;color:#21241f;width:1640px">En el laboratorio: <b>la dirección</b>. No es la única respuesta correcta; sí la más fácil de ver y de probar.</p>
+<p style="position:absolute;left:128px;bottom:56px;width:1600px;font-family:'IBM Plex Mono',monospace;font-size:24px;color:#6b6f63">Arquitectura de Software · Tema 2.4 · balance habitual, no un dogma</p>
+</section>
+</div>
+<div class="cell" data-slide="ciclo" data-n="17" tabindex="0" role="group" aria-roledescription="diapositiva" aria-label="17 de 24: El ciclo de vida de una versión">
+<section style="background:#eae7de;color:#21241f;font-family:'Source Serif 4',Georgia,serif;padding:88px 128px 150px;display:flex;flex-direction:column;gap:26px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:#1f5f8b;line-height:1.3">Retirar sin sorprender</p>
+<h2 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:88px;font-weight:700;line-height:1.05;color:#21241f">El ciclo de vida de una versión</h2>
+<div style="position:relative;width:1664px;height:262px">
+<div style="position:absolute;left:0px;top:0px;width:340px;height:190px;background:#fbfaf5;border-top:12px solid #2f6b3a;padding:16px 22px 18px">
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:56px;font-weight:700;line-height:1.05;color:#2f6b3a">Vigente</h3>
+<p style="font-size:27px;line-height:1.3;color:#21241f">Solo existe la v1.</p>
+</div>
+<p style="position:absolute;left:0px;top:208px;width:340px;font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:600;color:#2f6b3a">hasta hoy</p>
+<div style="position:absolute;left:436px;top:0px;width:340px;height:190px;background:#fbfaf5;border-top:12px solid #8a5d0f;padding:16px 22px 18px">
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:56px;font-weight:700;line-height:1.05;color:#8a5d0f">Obsoleta</h3>
+<p style="font-size:27px;line-height:1.3;color:#21241f">Existe la v2; la v1 avisa.</p>
+</div>
+<p style="position:absolute;left:436px;top:208px;width:340px;font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:600;color:#8a5d0f">desde el 1 oct 2026</p>
+<div style="position:absolute;left:872px;top:0px;width:340px;height:190px;background:#fbfaf5;border-top:12px solid #a84a14;padding:16px 22px 18px">
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:56px;font-weight:700;line-height:1.05;color:#a84a14">En retiro</h3>
+<p style="font-size:27px;line-height:1.3;color:#21241f">Sunset fija la fecha límite.</p>
+</div>
+<p style="position:absolute;left:872px;top:208px;width:340px;font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:600;color:#a84a14">hasta el 31 dic 2027</p>
+<div style="position:absolute;left:1308px;top:0px;width:340px;height:190px;background:#fbfaf5;border-top:12px solid #8f2b21;padding:16px 22px 18px">
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:56px;font-weight:700;line-height:1.05;color:#8f2b21">Retirada</h3>
+<p style="font-size:27px;line-height:1.3;color:#21241f">Responde 410 Gone o 404.</p>
+</div>
+<p style="position:absolute;left:1308px;top:208px;width:340px;font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:600;color:#8f2b21">después</p>
+<svg aria-hidden="true" style="position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none"><line x1="350.0" y1="105.0" x2="408.4" y2="105.0" stroke="#5c6158" stroke-width="4" stroke-linecap="round"/><polygon points="426.0,105.0 404.0,113.4 404.0,96.6" fill="#5c6158"/></svg>
+<svg aria-hidden="true" style="position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none"><line x1="786.0" y1="105.0" x2="844.4" y2="105.0" stroke="#5c6158" stroke-width="4" stroke-linecap="round"/><polygon points="862.0,105.0 840.0,113.4 840.0,96.6" fill="#5c6158"/></svg>
+<svg aria-hidden="true" style="position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none"><line x1="1222.0" y1="105.0" x2="1280.4" y2="105.0" stroke="#5c6158" stroke-width="4" stroke-linecap="round"/><polygon points="1298.0,105.0 1276.0,113.4 1276.0,96.6" fill="#5c6158"/></svg>
+</div>
+<div style="width:1664px;display:flex;flex-direction:column;gap:0;background:#1d201c;border-top:10px solid #6fb1e0;border-radius:0 0 12px 12px;padding:22px 26px 28px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#6fb1e0;padding:0 0 12px">Lo que dice la v1 en cada respuesta</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">Deprecation: @1790812800&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;# obsoleta desde el 1 de octubre de 2026</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">Sunset: Fri, 31 Dec 2027 23:59:59 GMT&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;# se retira el 31 de diciembre de 2027</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">Link: &lt;/v2/evaluaciones&gt;; rel="successor-version"&#160;&#160;&#160;# y la nueva está aquí</p>
+</div>
+<p style="position:absolute;left:128px;bottom:56px;width:1650px;font-family:'IBM Plex Mono',monospace;font-size:24px;color:#5c6158">Arquitectura de Software · Tema 2.4 · RFC 9745 (Deprecation) · RFC 8594 (Sunset) · RFC 5829</p>
+</section>
+</div>
+<div class="cell" data-slide="openapi" data-n="18" tabindex="0" role="group" aria-roledescription="diapositiva" aria-label="18 de 24: OpenAPI: el contrato, en un archivo">
+<section style="background:#1d201c;color:#f2efe6;font-family:'Source Serif 4',Georgia,serif;padding:88px 128px 150px;display:flex;flex-direction:column;gap:28px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:#6fb1e0;line-height:1.3">Documentar</p>
+<h2 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:88px;font-weight:700;line-height:1.05;color:#f2efe6">OpenAPI: el contrato, en un archivo</h2>
+<div style="display:flex;gap:26px;align-items:flex-start">
+<div style="width:940px;display:flex;flex-direction:column;gap:0;background:#1d201c;border-top:10px solid #6fb1e0;border-radius:0 0 12px 12px;padding:22px 26px 28px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#6fb1e0;padding:0 0 12px">Una operación en OpenAPI</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">"/v1/evaluaciones/{id}": {</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">&#160;&#160;"get": {</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">&#160;&#160;&#160;&#160;"operationId": "obtenerEvaluacion_v1",</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">&#160;&#160;&#160;&#160;"summary": "Obtiene una evaluación",</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">&#160;&#160;&#160;&#160;"parameters": [ { "name": "id", "in": "path",</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;"required": true } ],</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">&#160;&#160;&#160;&#160;"responses": {</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">&#160;&#160;&#160;&#160;&#160;&#160;"200": { "description": "La evaluación." },</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.5;color:#f2efe6;white-space:nowrap">&#160;&#160;&#160;&#160;&#160;&#160;"404": { "description": "No existe." } } } }</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;flex-direction:column;gap:10px;background:#262a24;border-top:10px solid #6fb1e0;padding:26px 30px 32px">
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:42px;font-weight:700;line-height:1.1;color:#6fb1e0">Describe</h3>
+<p style="font-size:26px;line-height:1.35;color:#f2efe6">Rutas, parámetros, cuerpos, respuestas y esquemas.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px;background:#262a24;border-top:10px solid #e58444;padding:26px 30px 32px">
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:42px;font-weight:700;line-height:1.1;color:#e58444">Alimenta herramientas</h3>
+<p style="font-size:26px;line-height:1.35;color:#f2efe6">Documentación navegable, clientes generados, pruebas de contrato.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px;background:#262a24;border-top:10px solid #8fc77a;padding:26px 30px 32px">
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:42px;font-weight:700;line-height:1.1;color:#8fc77a">Es un estándar</h3>
+<p style="font-size:26px;line-height:1.35;color:#f2efe6">OpenAPI Specification. Hoy usamos la 3.1; existe la 3.2 (sep. 2025).</p>
+</div>
+</div>
+</div>
+<p style="font-size:34px;line-height:1.4;color:#f2efe6;width:1640px">Su servidor lo publica en <b>GET /openapi.json</b>: la documentación también es un recurso.</p>
+<p style="position:absolute;left:128px;bottom:56px;width:1500px;font-family:'IBM Plex Mono',monospace;font-size:24px;color:#9a9d8e">Arquitectura de Software · Tema 2.4 · Diseño de APIs</p>
+</section>
+</div>
+<div class="cell" data-slide="docs" data-n="19" tabindex="0" role="group" aria-roledescription="diapositiva" aria-label="19 de 24: La documentación que no miente">
+<section style="background:#fbfaf5;color:#21241f;font-family:'Source Serif 4',Georgia,serif;padding:88px 128px 150px;display:flex;flex-direction:column;gap:28px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:#1f5f8b;line-height:1.3">El riesgo</p>
+<h2 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:88px;font-weight:700;line-height:1.05;color:#21241f">La documentación que no miente</h2>
+<div style="display:flex;gap:30px;align-items:flex-start">
+<div style="position:relative;width:900px;height:470px;flex:none">
+<div style="position:absolute;left:0px;top:0px;width:340px;height:110px;background:#1f5f8b;border-radius:12px;display:flex;align-items:center;justify-content:center"><h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:50px;font-weight:700;line-height:1;color:#fbfaf5">Código</h3></div>
+<div style="position:absolute;left:560px;top:0px;width:340px;height:110px;background:#a84a14;border-radius:12px;display:flex;align-items:center;justify-content:center"><h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:50px;font-weight:700;line-height:1;color:#fbfaf5">Documento</h3></div>
+<div style="position:absolute;left:280px;top:330px;width:340px;height:110px;background:#3a6330;border-radius:12px;display:flex;align-items:center;justify-content:center"><h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:50px;font-weight:700;line-height:1;color:#fbfaf5">Pruebas</h3></div>
+<svg aria-hidden="true" style="position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none"><line x1="340.0" y1="55.0" x2="542.4" y2="55.0" stroke="#8f2b21" stroke-width="4" stroke-linecap="round" stroke-dasharray="12 8"/><polygon points="560.0,55.0 538.0,63.4 538.0,46.6" fill="#8f2b21"/></svg>
+<svg aria-hidden="true" style="position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none"><line x1="560.0" y1="55.0" x2="357.6" y2="55.0" stroke="#8f2b21" stroke-width="4" stroke-linecap="round" stroke-dasharray="12 8"/><polygon points="340.0,55.0 362.0,46.6 362.0,63.4" fill="#8f2b21"/></svg>
+<svg aria-hidden="true" style="position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none"><line x1="380.0" y1="330.0" x2="201.5" y2="123.3" stroke="#3a6330" stroke-width="4" stroke-linecap="round"/><polygon points="190.0,110.0 210.7,121.2 198.0,132.1" fill="#3a6330"/></svg>
+<svg aria-hidden="true" style="position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none"><line x1="520.0" y1="330.0" x2="698.5" y2="123.3" stroke="#3a6330" stroke-width="4" stroke-linecap="round"/><polygon points="710.0,110.0 702.0,132.1 689.3,121.2" fill="#3a6330"/></svg>
+<p style="position:absolute;left:350px;top:6px;width:200px;font-size:26px;font-weight:600;text-align:center;color:#8f2b21">se desfasan</p>
+<p style="position:absolute;left:10px;top:225px;width:240px;font-size:26px;font-weight:600;text-align:right;color:#3a6330">le habla de verdad</p>
+<p style="position:absolute;left:650px;top:225px;width:240px;font-size:26px;font-weight:600;color:#3a6330">lo lee y compara</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;flex-direction:column;gap:10px;background:#f1eee4;border-top:10px solid #1f5f8b;padding:26px 30px 32px">
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:38px;font-weight:700;line-height:1.1;color:#1f5f8b">Generar el documento desde el código</h3>
+<p style="font-size:26px;line-height:1.35;color:inherit">Siempre coincide; pero describe lo que hay, no lo que se quiso prometer.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px;background:#f1eee4;border-top:10px solid #a84a14;padding:26px 30px 32px">
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:38px;font-weight:700;line-height:1.1;color:#a84a14">Generar el código desde el documento</h3>
+<p style="font-size:26px;line-height:1.35;color:inherit">Diseño primero: el contrato manda y el esqueleto sale de él.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px;background:#f1eee4;border-top:10px solid #3a6330;padding:26px 30px 32px">
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:38px;font-weight:700;line-height:1.1;color:#3a6330">Comprobar que coinciden</h3>
+<p style="font-size:26px;line-height:1.35;color:inherit">Una prueba compara las dos cosas. Es lo que hará el laboratorio.</p>
+</div>
+</div>
+</div>
+<p style="font-size:32px;line-height:1.4;color:#3b3f38;width:1640px">En el laboratorio falla una prueba si la API devuelve un estado que la documentación no declara.</p>
+<p style="position:absolute;left:128px;bottom:56px;width:1500px;font-family:'IBM Plex Mono',monospace;font-size:24px;color:#6b6f63">Arquitectura de Software · Tema 2.4 · Diseño de APIs</p>
+</section>
+</div>
+<div class="cell" data-slide="caso" data-n="20" tabindex="0" role="group" aria-roledescription="diapositiva" aria-label="20 de 24: MVC a los dos lados del cable">
+<section style="background:#1d201c;color:#f2efe6;font-family:'Source Serif 4',Georgia,serif;padding:88px 128px 150px;display:flex;flex-direction:column;gap:22px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:#6fb1e0;line-height:1.3">El caso · Notas del semestre</p>
+<h2 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:88px;font-weight:700;line-height:1.05;color:#f2efe6">MVC a los dos lados del cable</h2>
+<div style="position:relative;width:1664px;height:560px">
+<div style="position:absolute;left:0px;top:0px;width:700px;height:560px;background:#262a24;border:3px solid #3b4038;border-radius:16px"></div>
+<div style="position:absolute;left:964px;top:0px;width:700px;height:560px;background:#262a24;border:3px solid #3b4038;border-radius:16px"></div>
+<p style="position:absolute;left:28px;top:16px;width:500px;font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#9a9d8e">Navegador · cliente/</p>
+<p style="position:absolute;left:992px;top:16px;width:500px;font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#9a9d8e">Servidor · servidor/</p>
+<div style="position:absolute;left:40px;top:80px;width:280px;height:90px;background:#a84a14;border-radius:12px;display:flex;align-items:center;justify-content:center;padding:0 10px"><h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:40px;font-weight:700;line-height:1.05;color:#fbfaf5;text-align:center">Vista</h3></div>
+<div style="position:absolute;left:380px;top:80px;width:280px;height:90px;background:#3a6330;border-radius:12px;display:flex;align-items:center;justify-content:center;padding:0 10px"><h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:40px;font-weight:700;line-height:1.05;color:#fbfaf5;text-align:center">Controlador</h3></div>
+<div style="position:absolute;left:210px;top:250px;width:280px;height:100px;background:#1f5f8b;border-radius:12px;display:flex;align-items:center;justify-content:center;padding:0 10px"><h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:40px;font-weight:700;line-height:1.05;color:#fbfaf5;text-align:center">Modelo remoto</h3></div>
+<div style="position:absolute;left:210px;top:440px;width:280px;height:80px;background:#5c6158;border-radius:12px;display:flex;align-items:center;justify-content:center;padding:0 10px"><h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:38px;font-weight:700;line-height:1.05;color:#fbfaf5;text-align:center">cliente-api.js</h3></div>
+<div style="position:absolute;left:1000px;top:80px;width:280px;height:90px;background:#1f5f8b;border-radius:12px;display:flex;align-items:center;justify-content:center;padding:0 10px"><h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:46px;font-weight:700;line-height:1.05;color:#fbfaf5;text-align:center">Modelo</h3></div>
+<div style="position:absolute;left:1344px;top:80px;width:290px;height:90px;background:#5c6158;border-radius:12px;display:flex;align-items:center;justify-content:center;padding:0 10px"><h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:44px;font-weight:700;line-height:1.05;color:#fbfaf5;text-align:center">Almacén</h3></div>
+<div style="position:absolute;left:1000px;top:250px;width:280px;height:100px;background:#3a6330;border-radius:12px;display:flex;align-items:center;justify-content:center;padding:0 10px"><h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:44px;font-weight:700;line-height:1.05;color:#fbfaf5;text-align:center">Rutas</h3></div>
+<div style="position:absolute;left:1344px;top:250px;width:290px;height:100px;background:#a84a14;border-radius:12px;display:flex;align-items:center;justify-content:center;padding:0 10px"><h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:38px;font-weight:700;line-height:1.05;color:#fbfaf5;text-align:center">Representaciones</h3></div>
+<div style="position:absolute;left:1000px;top:440px;width:280px;height:80px;background:#5c6158;border-radius:12px;display:flex;align-items:center;justify-content:center;padding:0 10px"><h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:38px;font-weight:700;line-height:1.05;color:#fbfaf5;text-align:center">núcleo HTTP</h3></div>
+<svg aria-hidden="true" style="position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none"><line x1="180.0" y1="170.0" x2="266.3" y2="239.0" stroke="#e58444" stroke-width="4" stroke-linecap="round"/><polygon points="280.0,250.0 257.6,242.8 268.1,229.7" fill="#e58444"/></svg>
+<svg aria-hidden="true" style="position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none"><line x1="520.0" y1="170.0" x2="414.6" y2="240.2" stroke="#8fc77a" stroke-width="4" stroke-linecap="round"/><polygon points="400.0,250.0 413.6,230.8 423.0,244.8" fill="#8fc77a"/></svg>
+<svg aria-hidden="true" style="position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none"><line x1="350.0" y1="350.0" x2="350.0" y2="422.4" stroke="#6fb1e0" stroke-width="4" stroke-linecap="round"/><polygon points="350.0,440.0 341.6,418.0 358.4,418.0" fill="#6fb1e0"/></svg>
+<svg aria-hidden="true" style="position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none"><line x1="490.0" y1="480.0" x2="976.0" y2="480.0" stroke="#6fb1e0" stroke-width="6" stroke-linecap="round"/><polygon points="1000.0,480.0 970.0,491.6 970.0,468.4" fill="#6fb1e0"/></svg>
+<svg aria-hidden="true" style="position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none"><line x1="1140.0" y1="440.0" x2="1140.0" y2="367.6" stroke="#9a9d8e" stroke-width="4" stroke-linecap="round"/><polygon points="1140.0,350.0 1148.4,372.0 1131.6,372.0" fill="#9a9d8e"/></svg>
+<svg aria-hidden="true" style="position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none"><line x1="1140.0" y1="250.0" x2="1140.0" y2="187.6" stroke="#8fc77a" stroke-width="4" stroke-linecap="round"/><polygon points="1140.0,170.0 1148.4,192.0 1131.6,192.0" fill="#8fc77a"/></svg>
+<svg aria-hidden="true" style="position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none"><line x1="1280.0" y1="125.0" x2="1326.4" y2="125.0" stroke="#6fb1e0" stroke-width="4" stroke-linecap="round"/><polygon points="1344.0,125.0 1322.0,133.4 1322.0,116.6" fill="#6fb1e0"/></svg>
+<svg aria-hidden="true" style="position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none"><line x1="1280.0" y1="300.0" x2="1326.4" y2="300.0" stroke="#e58444" stroke-width="4" stroke-linecap="round"/><polygon points="1344.0,300.0 1322.0,308.4 1322.0,291.6" fill="#e58444"/></svg>
+<p style="position:absolute;left:706px;top:392px;width:252px;font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:600;text-align:center;color:#6fb1e0;line-height:1.3">HTTP + JSON<br>el contrato</p>
+</div>
+<p style="font-size:32px;line-height:1.4;color:#f2efe6;width:1640px">Las reglas viven en <b>un solo lugar</b>: el Modelo del servidor. El navegador no las copia: se las pregunta.</p>
+<p style="position:absolute;left:128px;bottom:56px;width:1500px;font-family:'IBM Plex Mono',monospace;font-size:24px;color:#9a9d8e">Arquitectura de Software · Tema 2.4 · Diseño de APIs</p>
+</section>
+</div>
+<div class="cell" data-slide="recorrido" data-n="21" tabindex="0" role="group" aria-roledescription="diapositiva" aria-label="21 de 24: Qué pasa cuando el usuario presiona «Agregar»">
+<section style="background:#fbfaf5;color:#21241f;font-family:'Source Serif 4',Georgia,serif;padding:80px 128px 150px;display:flex;flex-direction:column;gap:22px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:#1f5f8b;line-height:1.3">El recorrido</p>
+<h2 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:76px;font-weight:700;line-height:1.05;color:#21241f">Qué pasa cuando el usuario presiona «Agregar»</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+<div style="display:flex;flex-direction:column;gap:6px;background:#f1eee4;border-top:8px solid #a84a14;padding:16px 20px 18px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;color:#a84a14">1 · Vista</p>
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:42px;font-weight:700;line-height:1.1;color:#21241f">Avisa</h3>
+<p style="font-size:25px;line-height:1.3;color:#3b3f38">El usuario envió el formulario (vista.js).</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px;background:#f1eee4;border-top:8px solid #3a6330;padding:16px 20px 18px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;color:#3a6330">2 · Controlador</p>
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:42px;font-weight:700;line-height:1.1;color:#21241f">Traduce y espera</h3>
+<p style="font-size:25px;line-height:1.3;color:#3b3f38">Convierte el texto en números y espera (await).</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px;background:#f1eee4;border-top:8px solid #1f5f8b;padding:16px 20px 18px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;color:#1f5f8b">3 · Modelo remoto</p>
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:42px;font-weight:700;line-height:1.1;color:#21241f">Arma la solicitud</h3>
+<p style="font-size:25px;line-height:1.3;color:#3b3f38">POST /v1/evaluaciones, por cliente-api.js.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px;background:#f1eee4;border-top:8px solid #5c6158;padding:16px 20px 18px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;color:#5c6158">4 · Núcleo (servidor)</p>
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:42px;font-weight:700;line-height:1.1;color:#21241f">Recibe</h3>
+<p style="font-size:25px;line-height:1.3;color:#3b3f38">Busca la ruta, lee el JSON y lo valida.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px;background:#f1eee4;border-top:8px solid #3a6330;padding:16px 20px 18px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;color:#3a6330">5 · Ruta «crear»</p>
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:42px;font-weight:700;line-height:1.1;color:#21241f">Entrega</h3>
+<p style="font-size:25px;line-height:1.3;color:#3b3f38">Pasa nombre, peso y nota al Modelo.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px;background:#f1eee4;border-top:8px solid #1f5f8b;padding:16px 20px 18px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;color:#1f5f8b">6 · Modelo (servidor)</p>
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:42px;font-weight:700;line-height:1.1;color:#21241f">Decide</h3>
+<p style="font-size:25px;line-height:1.3;color:#3b3f38">Aplica las reglas, guarda y devuelve la evaluación.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px;background:#f1eee4;border-top:8px solid #3a6330;padding:16px 20px 18px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;color:#3a6330">7 · Ruta «crear»</p>
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:42px;font-weight:700;line-height:1.1;color:#21241f">Responde</h3>
+<p style="font-size:25px;line-height:1.3;color:#3b3f38">201 Created con Location y la representación.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px;background:#f1eee4;border-top:8px solid #1f5f8b;padding:16px 20px 18px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;color:#1f5f8b">8 · Modelo remoto</p>
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:42px;font-weight:700;line-height:1.1;color:#21241f">Se pone al día</h3>
+<p style="font-size:25px;line-height:1.3;color:#3b3f38">Pide la lista y el resumen y avisa a sus suscriptores.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px;background:#f1eee4;border-top:8px solid #a84a14;padding:16px 20px 18px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;color:#a84a14">9 · Vista</p>
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:42px;font-weight:700;line-height:1.1;color:#21241f">Se redibuja</h3>
+<p style="font-size:25px;line-height:1.3;color:#3b3f38">Por Observer, sin que nadie se lo ordene.</p>
+</div>
+</div>
+<p style="font-size:28px;line-height:1.4;color:#3b3f38;width:1640px">Camino alterno: el servidor responde 409 o 422 con un problema → el Modelo remoto lanza ErrorDeReglas → el Controlador pide a la Vista mostrar el mensaje.</p>
+<p style="position:absolute;left:128px;bottom:56px;width:1500px;font-family:'IBM Plex Mono',monospace;font-size:24px;color:#6b6f63">Arquitectura de Software · Tema 2.4 · Diseño de APIs</p>
+</section>
+</div>
+<div class="cell" data-slide="cambio" data-n="22" tabindex="0" role="group" aria-roledescription="diapositiva" aria-label="22 de 24: Qué cambió y qué no">
+<section style="background:#eae7de;color:#21241f;font-family:'Source Serif 4',Georgia,serif;padding:88px 128px 150px;display:flex;flex-direction:column;gap:28px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:#1f5f8b;line-height:1.3">Lo que la separación pagó</p>
+<h2 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:88px;font-weight:700;line-height:1.05;color:#21241f">Qué cambió y qué no</h2>
+<div style="display:flex;gap:22px;align-items:stretch">
+<div style="flex:1;display:flex;flex-direction:column;gap:10px;background:#fbfaf5;border-top:12px solid #2f6b3a;padding:24px 28px 30px">
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:56px;font-weight:700;line-height:1.05;color:#2f6b3a">No cambió</h3>
+<p style="font-size:27px;line-height:1.3;color:#21241f"><b style="font-family:'IBM Plex Mono',monospace;font-size:25px">vista.js</b> ni una línea.</p>
+<p style="font-size:27px;line-height:1.3;color:#21241f"><b style="font-family:'IBM Plex Mono',monospace;font-size:25px">index.html</b> sigue igual.</p>
+<p style="font-size:27px;line-height:1.3;color:#21241f"><b style="font-family:'IBM Plex Mono',monospace;font-size:25px">Las reglas</b> solo se mudaron al servidor.</p>
+<p style="font-size:27px;line-height:1.3;color:#21241f"><b style="font-family:'IBM Plex Mono',monospace;font-size:25px">Observer</b> la Vista sigue suscrita.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:10px;background:#fbfaf5;border-top:12px solid #8a5d0f;padding:24px 28px 30px">
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:56px;font-weight:700;line-height:1.05;color:#8a5d0f">Cambió poco</h3>
+<p style="font-size:27px;line-height:1.3;color:#21241f"><b style="font-family:'IBM Plex Mono',monospace;font-size:25px">controlador.js</b> espera con await y distingue un error más.</p>
+<p style="font-size:27px;line-height:1.3;color:#21241f"><b style="font-family:'IBM Plex Mono',monospace;font-size:25px">termometro</b> recibe las reglas, ya no las importa.</p>
+<p style="font-size:27px;line-height:1.3;color:#21241f"><b style="font-family:'IBM Plex Mono',monospace;font-size:25px">modelo.js</b> cuatro retoques: código en el error, devuelve lo creado, obtener y existencia primero.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:10px;background:#fbfaf5;border-top:12px solid #1f5f8b;padding:24px 28px 30px">
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:56px;font-weight:700;line-height:1.05;color:#1f5f8b">Es nuevo</h3>
+<p style="font-size:27px;line-height:1.3;color:#21241f"><b style="font-family:'IBM Plex Mono',monospace;font-size:25px">Navegador</b> cliente-api.js y modelo-remoto.js.</p>
+<p style="font-size:27px;line-height:1.3;color:#21241f"><b style="font-family:'IBM Plex Mono',monospace;font-size:25px">Servidor</b> rutas, núcleo HTTP y representaciones.</p>
+<p style="font-size:27px;line-height:1.3;color:#21241f"><b style="font-family:'IBM Plex Mono',monospace;font-size:25px">Contrato</b> v1, v2 y OpenAPI.</p>
+<p style="font-size:27px;line-height:1.3;color:#21241f"><b style="font-family:'IBM Plex Mono',monospace;font-size:25px">Pruebas</b> del contrato y de arquitectura.</p>
+</div>
+</div>
+<p style="font-size:34px;line-height:1.4;color:#21241f;width:1640px">La clase pasada separamos el Modelo de la Vista. Hoy lo cobramos: <b>mudamos el Modelo de lugar sin reescribir la pantalla</b>.</p>
+<p style="position:absolute;left:128px;bottom:56px;width:1500px;font-family:'IBM Plex Mono',monospace;font-size:24px;color:#5c6158">Arquitectura de Software · Tema 2.4 · Diseño de APIs</p>
+</section>
+</div>
+<div class="cell" data-slide="lab-puente" data-n="23" tabindex="0" role="group" aria-roledescription="diapositiva" aria-label="23 de 24: El laboratorio de hoy">
+<section style="background:#1d201c;color:#f2efe6;font-family:'Source Serif 4',Georgia,serif;padding:88px 128px 150px;display:flex;flex-direction:column;gap:28px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:#6fb1e0;line-height:1.3">Manos a la obra · ≈ 2 h 20 min</p>
+<h2 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:88px;font-weight:700;line-height:1.05;color:#f2efe6">El laboratorio de hoy</h2>
+<div style="display:flex;gap:40px;align-items:flex-start">
+<table style="width:960px;font-size:30px;color:#f2efe6;background:#1d201c">
+<tr style="background:#262a24"><td style="padding:10px 22px">0 · Preparación</td><td style="padding:10px 22px;color:#6fb1e0">10 min</td></tr>
+<tr><td style="padding:10px 22px">1 · Diseñar el contrato</td><td style="padding:10px 22px;color:#6fb1e0">20 min</td></tr>
+<tr style="background:#262a24"><td style="padding:10px 22px">2 · El servidor: la API v1</td><td style="padding:10px 22px;color:#6fb1e0">35 min</td></tr>
+<tr><td style="padding:10px 22px">3 · El navegador</td><td style="padding:10px 22px;color:#6fb1e0">25 min</td></tr>
+<tr style="background:#262a24"><td style="padding:10px 22px">4 · Versionar: la v2</td><td style="padding:10px 22px;color:#6fb1e0">25 min</td></tr>
+<tr><td style="padding:10px 22px">5 · Documentar con OpenAPI</td><td style="padding:10px 22px;color:#6fb1e0">15 min</td></tr>
+<tr style="background:#262a24"><td style="padding:10px 22px">6 · Medir y entregar</td><td style="padding:10px 22px;color:#6fb1e0">10 min</td></tr>
+</table>
+<div style="width:664px;display:flex;flex-direction:column;gap:12px;background:#262a24;border:2px solid #3b4038;border-radius:12px;padding:28px 32px 32px">
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:56px;font-weight:700;line-height:1.1;color:#6fb1e0">Cada equipo entrega</h3>
+<p style="font-size:30px;line-height:1.3;color:#f2efe6">El enlace de su repositorio</p>
+<p style="font-size:30px;line-height:1.3;color:#f2efe6">npm test: 104 de 104 en verde</p>
+<p style="font-size:30px;line-height:1.3;color:#f2efe6">Un commit por parte</p>
+<p style="font-size:30px;line-height:1.3;color:#f2efe6">ENTREGA.md completo</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:26px;line-height:1.35;color:#6fb1e0">Ruta corta ≈ 100 min: partes 0 a 3</p>
+</div>
+</div>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:26px;line-height:1.4;color:#f2efe6;width:1640px">Guía: api-notas-lab.vercel.app/guia.html</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:26px;line-height:1.4;color:#f2efe6;width:1640px">Plantilla: github.com/xaviercardona-ops/api-notas-lab</p>
+<p style="position:absolute;left:128px;bottom:56px;width:1500px;font-family:'IBM Plex Mono',monospace;font-size:24px;color:#9a9d8e">Arquitectura de Software · Tema 2.4 · Diseño de APIs</p>
+</section>
+</div>
+<div class="cell" data-slide="cierre" data-n="24" tabindex="0" role="group" aria-roledescription="diapositiva" aria-label="24 de 24: Para llevarse">
+<section style="background:#1d201c;color:#f2efe6;font-family:'Source Serif 4',Georgia,serif;padding:88px 128px 150px;display:flex;flex-direction:column;gap:30px">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:#6fb1e0;line-height:1.3">Cierre</p>
+<h2 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:88px;font-weight:700;line-height:1.05;color:#f2efe6">Para llevarse</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px">
+<div style="display:flex;flex-direction:column;gap:10px;background:#262a24;border-top:10px solid #6fb1e0;padding:26px 30px 32px">
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:52px;font-weight:700;line-height:1.1;color:#6fb1e0">La API es un contrato</h3>
+<p style="font-size:29px;line-height:1.35;color:#f2efe6">Se diseña antes de programar: la dirección nombra, el método actúa y el estado habla.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px;background:#262a24;border-top:10px solid #e58444;padding:26px 30px 32px">
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:52px;font-weight:700;line-height:1.1;color:#e58444">Cambiar sin romper</h3>
+<p style="font-size:29px;line-height:1.35;color:#f2efe6">Versiones, avisos con fechas y documentación que se comprueba contra el código.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px;background:#262a24;border-top:10px solid #8fc77a;padding:26px 30px 32px">
+<h3 style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:52px;font-weight:700;line-height:1.1;color:#8fc77a">MVC no desapareció</h3>
+<p style="font-size:29px;line-height:1.35;color:#f2efe6">Se mudó: hay MVC a los dos lados del cable y las reglas tienen un solo dueño.</p>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px;padding:12px 0 0">
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#6fb1e0;line-height:1.3">Referencias</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.4;color:#c9c6ba;white-space:nowrap">Fielding, R. (2000). Architectural Styles and the Design of Network-based Software Architectures, cap. 5.</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.4;color:#c9c6ba;white-space:nowrap">IETF. RFC 9110: HTTP Semantics (2022) · RFC 9457: Problem Details for HTTP APIs (2023).</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.4;color:#c9c6ba;white-space:nowrap">IETF. RFC 9745: The Deprecation HTTP Response Header Field (2025) · RFC 8594: The Sunset HTTP Header Field (2019).</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.4;color:#c9c6ba;white-space:nowrap">IETF. RFC 8288: Web Linking (2017) · RFC 5829: Link Relations for Simple Version Navigation (2010).</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.4;color:#c9c6ba;white-space:nowrap">OpenAPI Initiative. OpenAPI Specification (spec.openapis.org).</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:24px;line-height:1.4;color:#c9c6ba;white-space:nowrap">Fowler, M. Richardson Maturity Model. martinfowler.com/articles/richardsonMaturityModel.html</p>
+</div>
+<p style="position:absolute;left:128px;bottom:56px;width:1500px;font-family:'IBM Plex Mono',monospace;font-size:24px;color:#9a9d8e">Arquitectura de Software · Tema 2.4 · Diseño de APIs</p>
+</section>
+</div>
+</main>
+
+<div id="ui-progress" aria-hidden="true"><i></i></div>
+<div id="ui-hint" aria-hidden="true">Todas las diapositivas · clic para abrir una · Esc para volver</div>
+<div id="ui-rotate" aria-hidden="true">Gira el teléfono para ver las diapositivas más grandes</div>
+<nav id="ui-bar" aria-label="Controles de la presentación">
+  <a href="/guia.html" title="Guía del laboratorio">Guía</a>
+  <span class="sep only-present" aria-hidden="true"></span>
+  <button type="button" id="ui-prev" class="only-present" aria-label="Diapositiva anterior" title="Anterior (←)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+  <span id="ui-count" class="only-present" aria-live="polite">1 / 24</span>
+  <button type="button" id="ui-next" class="only-present" aria-label="Diapositiva siguiente" title="Siguiente (→)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+  <span class="sep" aria-hidden="true"></span>
+  <button type="button" id="ui-grid" aria-label="Ver todas las diapositivas" aria-pressed="false" title="Ver todas (O)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg></button>
+  <button type="button" id="ui-full" aria-label="Pantalla completa" title="Pantalla completa (F)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+  <button type="button" id="ui-print" aria-label="Imprimir o guardar como PDF" title="Imprimir o guardar como PDF"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9V3h10v6M7 17H5a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2"/><rect x="7" y="14" width="10" height="7" rx="1"/></svg></button>
+</nav>
+
+<script>
+(() => {
+  const ids = ["cover","hilo","pregunta","donde","api","tentacion","rest","recursos","endpoints","metodos","estados","votacion","respuestas","listas","versionar","estrategias","ciclo","openapi","docs","caso","recorrido","cambio","lab-puente","cierre"];
+  const body = document.body;
+  const root = document.documentElement;
+  const cells = [...document.querySelectorAll('.cell')];
+  const total = cells.length;
+  const bar = document.getElementById('ui-bar');
+  const count = document.getElementById('ui-count');
+  const prevBtn = document.getElementById('ui-prev');
+  const nextBtn = document.getElementById('ui-next');
+  const gridBtn = document.getElementById('ui-grid');
+  const fullBtn = document.getElementById('ui-full');
+  const printBtn = document.getElementById('ui-print');
+  const progress = document.querySelector('#ui-progress i');
+  const isGrid = () => body.classList.contains('grid');
+  let cur = 0;
+  let idleTimer = 0;
+
+  function fit() {
+    if (isGrid()) {
+      const vw = root.clientWidth, pad = 24, gap = 24, target = 380;
+      const cols = Math.max(1, Math.floor((vw - pad * 2 + gap) / (target + gap)));
+      const w = Math.min(560, (vw - pad * 2 - gap * (cols - 1)) / cols);
+      root.style.setProperty('--cols', cols);
+      root.style.setProperty('--k', (w / 1920).toFixed(5));
+    } else {
+      root.style.setProperty('--k', Math.min(window.innerWidth / 1920, window.innerHeight / 1080).toFixed(5));
+    }
+  }
+
+  function render() {
+    cells.forEach((c, i) => {
+      c.classList.toggle('active', i === cur);
+      c.inert = !isGrid() && i !== cur;
+    });
+    count.textContent = (cur + 1) + ' / ' + total;
+    prevBtn.disabled = cur === 0;
+    nextBtn.disabled = cur === total - 1;
+    progress.style.width = ((cur + 1) / total * 100) + '%';
+  }
+
+  function go(n, noHash) {
+    cur = Math.max(0, Math.min(total - 1, n));
+    render();
+    if (!noHash) history.replaceState(null, '', '#' + ids[cur]);
+  }
+
+  function fromHash() {
+    const h = decodeURIComponent(location.hash.slice(1));
+    if (!h) return 0;
+    const byId = ids.indexOf(h);
+    if (byId >= 0) return byId;
+    const n = parseInt(h, 10);
+    return Number.isFinite(n) ? n - 1 : 0;
+  }
+
+  function setGrid(on) {
+    body.classList.toggle('grid', on);
+    body.classList.toggle('present', !on);
+    gridBtn.setAttribute('aria-pressed', String(on));
+    body.classList.remove('idle');
+    fit();
+    render();
+    if (on) cells[cur].scrollIntoView({ block: 'center' });
+    else window.scrollTo(0, 0);
+  }
+
+  function toggleFull() {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else root.requestFullscreen().catch(() => {});
+  }
+  if (!root.requestFullscreen) fullBtn.hidden = true;
+
+  function wake() {
+    body.classList.remove('idle');
+    clearTimeout(idleTimer);
+    if (isGrid() || !matchMedia('(hover: hover)').matches) return;
+    idleTimer = setTimeout(() => {
+      if (!bar.matches(':focus-within')) body.classList.add('idle');
+    }, 2600);
+  }
+
+  prevBtn.addEventListener('click', () => go(cur - 1));
+  nextBtn.addEventListener('click', () => go(cur + 1));
+  gridBtn.addEventListener('click', () => setGrid(!isGrid()));
+  fullBtn.addEventListener('click', toggleFull);
+  printBtn.addEventListener('click', () => window.print());
+
+  cells.forEach((c, i) => {
+    c.addEventListener('click', (e) => {
+      if (isGrid()) { go(i); setGrid(false); return; }
+      if (e.target.closest('a')) return;
+      if (String(getSelection()).length) return;
+      const x = e.clientX / window.innerWidth;
+      go(x < 0.3 ? cur - 1 : cur + 1);
+    });
+    c.addEventListener('keydown', (e) => {
+      if (isGrid() && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); go(i); setGrid(false); }
+    });
+  });
+
+  addEventListener('keydown', (e) => {
+    wake();
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const onControl = e.target.closest && e.target.closest('button, a');
+    const k = e.key;
+    if (isGrid()) {
+      const cols = parseInt(getComputedStyle(root).getPropertyValue('--cols'), 10) || 1;
+      const move = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: cols, ArrowUp: -cols }[k];
+      if (move) { e.preventDefault(); go(cur + move, true); cells[cur].focus(); cells[cur].scrollIntoView({ block: 'nearest' }); return; }
+      if (k === 'Escape' || k === 'o' || k === 'O' || k === 'g' || k === 'G') { e.preventDefault(); setGrid(false); }
+      return;
+    }
+    if (k === 'ArrowRight' || k === 'ArrowDown' || k === 'PageDown' || ((k === ' ' || k === 'Enter') && !onControl)) {
+      e.preventDefault(); go(cur + (e.shiftKey && k === ' ' ? -1 : 1));
+    } else if (k === 'ArrowLeft' || k === 'ArrowUp' || k === 'PageUp' || k === 'Backspace') {
+      e.preventDefault(); go(cur - 1);
+    } else if (k === 'Home') { e.preventDefault(); go(0); }
+    else if (k === 'End') { e.preventDefault(); go(total - 1); }
+    else if (k === 'f' || k === 'F') toggleFull();
+    else if (k === 'o' || k === 'O' || k === 'g' || k === 'G') setGrid(true);
+  });
+
+  let tx = 0, ty = 0;
+  const vp = document.getElementById('viewport');
+  vp.addEventListener('touchstart', (e) => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, { passive: true });
+  vp.addEventListener('touchend', (e) => {
+    if (isGrid()) return;
+    const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) go(cur + (dx < 0 ? 1 : -1));
+  }, { passive: true });
+
+  addEventListener('resize', fit);
+  addEventListener('pointermove', wake);
+  addEventListener('pointerdown', wake);
+  addEventListener('hashchange', () => go(fromHash(), true));
+
+  fit();
+  go(fromHash(), true);
+  wake();
+})();
+</script>
+</body>
+</html>
